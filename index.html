@@ -1,257 +1,120 @@
 <!DOCTYPE html>
 <html lang="de">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Lager-Pro | Filiale 77</title>
-    <script src="https://unpkg.com/html5-qrcode"></script>
-    <style>
-        :root { 
-            --primary: #007bff; --accent: #d63384; --success: #28a745; 
-            --danger: #dc3545; --dark: #1a1d20; --light: #f8f9fa;
-        }
-        
-        body { 
-            font-family: -apple-system, sans-serif; background: #000; 
-            margin: 0; padding: 0; display: flex; flex-direction: column; 
-            height: 100dvh; overflow: hidden; 
-        }
-
-        /* HEADER */
-        header {
-            background: var(--dark); color: white; padding: 12px 15px;
-            display: flex; justify-content: space-between; align-items: center;
-            z-index: 1001; border-bottom: 1px solid #333;
-        }
-
-        .menu-btn { 
-            background: none; border: 1px solid #444; color: white; 
-            padding: 8px 12px; border-radius: 8px; font-size: 18px; cursor: pointer;
-        }
-
-        /* NAV MENU */
-        #main-menu {
-            position: fixed; top: 0; left: -100%; width: 280px; height: 100%;
-            background: white; z-index: 2000; transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            box-shadow: 5px 0 15px rgba(0,0,0,0.5); padding: 20px; box-sizing: border-box;
-        }
-        #main-menu.active { left: 0; }
-        .menu-overlay {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.7); z-index: 1999; display: none;
-        }
-        .menu-overlay.active { display: block; }
-        .menu-item {
-            padding: 15px; border-bottom: 1px solid #eee; font-weight: bold;
-            color: var(--dark); text-decoration: none; display: block;
-        }
-
-        /* --- KAMERA-BEREICH (DER FIX) --- */
-        #reader { 
-            flex-grow: 1; 
-            width: 100%; 
-            background: #000; 
-            overflow: hidden; /* Maskiert das vergrößerte Video */
-            position: relative;
-        }
-
-        /* Video zentrieren und für Zoom vorbereiten */
-        #reader video { 
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%) scale(1);
-            min-width: 100%; 
-            min-height: 100%;
-            object-fit: cover;
-            transition: transform 0.1s ease-out;
-        }
-
-        /* UI-BEDIENELEMENTE */
-        .ui-wrapper { 
-            background: white; border-radius: 20px 20px 0 0; padding: 20px; 
-            box-sizing: border-box; box-shadow: 0 -10px 30px rgba(0,0,0,0.5);
-            z-index: 10; padding-bottom: env(safe-area-inset-bottom);
-        }
-
-        .zoom-box { 
-            background: var(--light); padding: 10px; border-radius: 12px; 
-            margin-bottom: 15px; border: 1px solid #ddd; 
-        }
-        
-        .zoom-slider { 
-            width: 100%; height: 35px; cursor: pointer; accent-color: var(--primary);
-        }
-
-        #instruction { font-weight: bold; color: var(--accent); text-align: center; margin-bottom: 12px; font-size: 14px; text-transform: uppercase; }
-        .input-group { margin-bottom: 10px; }
-        label { font-size: 11px; font-weight: bold; color: #888; display: block; margin-bottom: 4px; }
-        input[type="text"] { width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 10px; font-size: 16px; box-sizing: border-box; background: #fafafa; }
-        
-        .btn-row { display: none; gap: 10px; margin-top: 15px; }
-        .btn-action { flex: 1; padding: 16px; border: none; border-radius: 12px; color: white; font-weight: bold; font-size: 15px; cursor: pointer; }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Lager Pro | GitHub Edition</title>
+  <script src="https://unpkg.com/html5-qrcode"></script>
+  <style>
+    :root { --primary: #2563eb; --bg: #f8fafc; }
+    body { font-family: sans-serif; background: var(--bg); padding: 15px; margin: 0; }
+    .container { max-width: 500px; margin: auto; }
+    .nav { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-bottom: 20px; }
+    button { padding: 12px; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; }
+    button.active { background: var(--primary); color: white; }
+    .card { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); display: none; }
+    .card.active { display: block; }
+    input { width: 100%; padding: 12px; margin: 8px 0; border: 1px solid #ddd; border-radius: 6px; box-sizing: border-box; }
+    .btn-main { width: 100%; background: var(--primary); color: white; margin-top: 10px; font-size: 1rem; }
+    #reader-waren, #reader-platz { width: 100%; border-radius: 8px; overflow: hidden; }
+    .result-box { background: #eee; padding: 15px; border-radius: 8px; margin-top: 10px; min-height: 40px; }
+  </style>
 </head>
 <body>
 
-    <header>
-        <button class="menu-btn" onclick="toggleMenu()">☰</button>
-        <div id="current-mode-title" style="font-weight: bold; font-size: 18px;">Item Transfer</div>
-        <div style="font-size: 10px; text-align: right; opacity: 0.8;">F77<br>ONLINE</div>
-    </header>
+<div class="container">
+  <input type="hidden" id="backend-url" value="https://script.google.com/macros/s/AKfycbzjTFa1kggYj9oheoEwloV0wfBIYli1BjyG7CWphA9Tb5ii334xx2L1ksoeN54SmTaSAw/exec">
 
-    <div class="menu-overlay" id="overlay" onclick="toggleMenu()"></div>
-    <nav id="main-menu">
-        <h2 style="color: var(--primary); margin-top: 0;">Lager-Pro 📦</h2>
-        <hr style="border: 0; border-top: 1px solid #eee; margin-bottom: 15px;">
-        <a href="#" class="menu-item" onclick="setMode('Item Transfer')">🔄 Item Transfer</a>
-        <a href="#" class="menu-item" onclick="setMode('Platz prüfen')">📍 Platz prüfen</a>
-        <a href="#" class="menu-item" onclick="setMode('Warenbezeichnung')">🏷️ Warenbezeichnung</a>
-        <div style="margin-top: auto; font-size: 10px; color: #bbb; text-align: center;">v2.1.1-HybridZoom</div>
-    </nav>
+  <div class="nav">
+    <button id="btn-waren" class="active" onclick="switchTab('warenbewegung')">WAREN</button>
+    <button id="btn-platz" onclick="switchTab('platzpruefung')">PRÜFUNG</button>
+    <button id="btn-settings" onclick="switchTab('einstellungen')">SETUP</button>
+  </div>
 
-    <div id="reader"></div>
+  <div id="warenbewegung" class="card active">
+    <h3>📦 Warenbewegung</h3>
+    <div id="reader-waren"></div>
+    <input type="text" id="w-artikel" placeholder="Artikel-Barcode">
+    <input type="number" id="w-menge" placeholder="Menge" value="1">
+    <input type="text" id="w-platz" placeholder="Lagerplatz">
+    <button class="btn-main" onclick="apiCall('buchung')">Buchen</button>
+  </div>
 
-    <div class="ui-wrapper">
-        <div id="instruction">Suche Kamera...</div>
-        
-        <div class="zoom-box">
-            <div style="display: flex; justify-content: space-between; align-items: center;">
-                <label id="zoom-label" style="color: var(--dark); font-size: 12px;">🔍 ZOOM: 1.0x</label>
-            </div>
-            <input type="range" class="zoom-slider" id="zoom-range" min="1" max="5" step="0.1" value="1">
-        </div>
+  <div id="platzpruefung" class="card">
+    <h3>🔍 Platzprüfung</h3>
+    <div id="reader-platz"></div>
+    <input type="text" id="p-platz" placeholder="Platz scannen..." onchange="apiCall('pruefung')">
+    <div id="p-ergebnis" class="result-box">Warte auf Scan...</div>
+  </div>
 
-        <div class="input-group">
-            <label id="label-1">ARTIKEL / EAN</label>
-            <input type="text" id="input-1" placeholder="Bitte scannen..." readonly>
-        </div>
+  <div id="einstellungen" class="card">
+    <h3>⚙️ Setup</h3>
+    <p>Host: GitHub Pages</p>
+    <button onclick="location.reload()" style="width:100%">Reload App</button>
+  </div>
+</div>
 
-        <div class="input-group" id="group-2">
-            <label id="label-2">LAGERPLATZ</label>
-            <input type="text" id="input-2" placeholder="Warte auf Artikel..." readonly>
-        </div>
+<script>
+  let html5QrCode;
+  const url = document.getElementById('backend-url').value;
 
-        <div class="btn-row" id="action-buttons">
-            <button class="btn-action" style="background: var(--success);" id="btn-main" onclick="handleAction('EIN')">Einlagern</button>
-            <button class="btn-action" style="background: var(--danger);" id="btn-sub" onclick="handleAction('AUS')">Auslagern</button>
-        </div>
-    </div>
+  async function apiCall(modus) {
+    const loader = document.getElementById('p-ergebnis');
+    if(modus === 'pruefung') loader.innerHTML = "⏳ Suche...";
+    
+    const payload = {
+      aktion: modus,
+      daten: modus === 'buchung' ? {
+        typ: "Bewegung",
+        artikel: document.getElementById('w-artikel').value,
+        menge: document.getElementById('w-menge').value,
+        platz: document.getElementById('w-platz').value
+      } : null,
+      platzId: modus === 'pruefung' ? document.getElementById('p-platz').value : null
+    };
 
-    <script>
-        // DEINE GOOGLE URL HIER EINTRAGEN
-        const APP_CONFIG = {
-            url: "https://script.google.com/macros/s/AKfycbyB6j0qIdNneZfGE4Zhpcn1pkduEQH8VqOudPaMhTVyG5vu3Z1hm8xliAIXDR3Uj0dR5A/exec" 
-        };
+    try {
+      // Fetch an Google Apps Script (Redirects müssen erlaubt sein)
+      const response = await fetch(url, {
+        method: "POST",
+        body: JSON.stringify(payload)
+      });
+      const data = await response.json();
+      
+      if(modus === 'buchung') {
+        alert(data.res);
+        document.getElementById('w-artikel').value = "";
+      } else {
+        const res = data.res;
+        loader.innerHTML = res ? `📦 ${res.artikel} | 🔢 ${res.menge}` : "❌ Nicht gefunden";
+      }
+    } catch (e) {
+      alert("Fehler: Verbindung zum Backend fehlgeschlagen.");
+      console.error(e);
+    }
+  }
 
-        let scanner, cameraTrack, currentMode = 'Item Transfer';
+  function switchTab(tabId) {
+    document.querySelectorAll('.card').forEach(c => c.classList.remove('active'));
+    document.querySelectorAll('.nav button').forEach(b => b.classList.remove('active'));
+    document.getElementById(tabId).classList.add('active');
+    document.getElementById('btn-' + tabId.substring(0,5)).classList.add('active');
+    if (html5QrCode) html5QrCode.stop().then(() => startScanner(tabId));
+  }
 
-        async function init() {
-            setupZoom();
-            scanner = new Html5Qrcode("reader");
-            try {
-                await scanner.start(
-                    { facingMode: "environment" }, 
-                    { fps: 20, qrbox: (w, h) => ({ width: w * 0.7, height: h * 0.3 }) }, 
-                    (text) => processScan(text)
-                );
-                document.getElementById('instruction').innerText = "Bereit für Scan";
-                setTimeout(() => { cameraTrack = scanner.getRunningTrack(); }, 1500);
-            } catch (e) { 
-                document.getElementById('instruction').innerText = "Kamera-Zugriff prüfen!"; 
-            }
-        }
+  function startScanner(tabId) {
+    const el = tabId === 'warenbewegung' ? "reader-waren" : (tabId === 'platzpruefung' ? "reader-platz" : null);
+    const target = tabId === 'warenbewegung' ? "w-artikel" : "p-platz";
+    if(!el) return;
+    html5QrCode = new Html5Qrcode(el);
+    html5QrCode.start({ facingMode: "environment" }, { fps: 10, qrbox: 250 }, (txt) => {
+      document.getElementById(target).value = txt;
+      if(tabId === 'platzpruefung') apiCall('pruefung');
+      navigator.vibrate(50);
+    }).catch(() => {});
+  }
 
-        function toggleMenu() {
-            document.getElementById('main-menu').classList.toggle('active');
-            document.getElementById('overlay').classList.toggle('active');
-        }
-
-        function setMode(mode) {
-            currentMode = mode;
-            document.getElementById('current-mode-title').innerText = mode;
-            document.getElementById('group-2').style.display = (mode === 'Item Transfer') ? "block" : "none";
-            document.getElementById('label-1').innerText = (mode === 'Platz prüfen') ? "LAGERPLATZ SCAN" : "ARTIKEL / EAN";
-            toggleMenu(); resetInputs();
-        }
-
-        function resetInputs() {
-            document.getElementById('input-1').value = ""; 
-            document.getElementById('input-2').value = "";
-            document.getElementById('action-buttons').style.display = "none";
-            document.getElementById('instruction').innerText = "Bereit für nächsten Scan";
-        }
-
-        function setupZoom() {
-            const slider = document.getElementById('zoom-range');
-            const label = document.getElementById('zoom-label');
-
-            slider.addEventListener('input', (e) => {
-                const val = parseFloat(e.target.value);
-                label.innerText = `🔍 ZOOM: ${val.toFixed(1)}x`;
-                
-                // Hardware-Zoom Versuch (Browser-intern)
-                if (cameraTrack && typeof cameraTrack.getCapabilities === 'function') {
-                    const caps = cameraTrack.getCapabilities();
-                    if (caps.zoom) {
-                        cameraTrack.applyConstraints({ advanced: [{ zoom: val }] }).catch(() => {});
-                    }
-                }
-                
-                // Digitaler Zoom Fix (CSS Maskierung)
-                const video = document.querySelector('#reader video');
-                if (video) {
-                    video.style.transform = `translate(-50%, -50%) scale(${val})`;
-                }
-            });
-        }
-
-        function processScan(text) {
-            const i1 = document.getElementById('input-1'), i2 = document.getElementById('input-2');
-            
-            if (currentMode !== 'Item Transfer') {
-                i1.value = text;
-                document.getElementById('action-buttons').style.display = "flex";
-                document.getElementById('btn-main').innerText = "Information abrufen";
-                document.getElementById('btn-sub').style.display = "none";
-            } else {
-                if (!i1.value) { 
-                    i1.value = text; 
-                    document.getElementById('instruction').innerText = "Platz scannen..."; 
-                } else if (!i2.value && text !== i1.value) { 
-                    i2.value = text; 
-                    document.getElementById('action-buttons').style.display = "flex"; 
-                    document.getElementById('btn-sub').style.display = "block";
-                    document.getElementById('btn-main').innerText = "Einlagern";
-                    document.getElementById('btn-sub').innerText = "Auslagern";
-                }
-            }
-        }
-
-        function handleAction(type) {
-            const ware = document.getElementById('input-1').value;
-            const platz = document.getElementById('input-2').value;
-            let finalUrl = APP_CONFIG.url + "?";
-
-            if (currentMode === 'Item Transfer') {
-                finalUrl += `ware=${ware}&platz=${platz}&typ=${type === 'EIN' ? 'EINLAGERN' : 'AUSLAGERN'}`;
-            } else if (currentMode === 'Platz prüfen') {
-                finalUrl += `action=getPlatzInfo&platz=${ware}`;
-            } else {
-                finalUrl += `action=getInfo&ware=${ware}`;
-            }
-
-            document.getElementById('instruction').innerText = "Daten werden übertragen...";
-            
-            fetch(finalUrl, { method: "GET", mode: "no-cors" })
-                .then(() => { 
-                    alert("✅ Erfolgreich!"); 
-                    resetInputs(); 
-                })
-                .catch(() => alert("❌ Fehler beim Senden!"));
-        }
-
-        window.onload = init;
-    </script>
+  window.onload = () => startScanner('warenbewegung');
+</script>
 </body>
 </html>
