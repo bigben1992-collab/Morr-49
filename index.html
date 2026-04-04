@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Lager-Pro | Multi-Branch</title>
+    <script src="https://unpkg.com/html5-qrcode"></script>
+    <style>
+        /* Modernisiertes UI */
+        :root { --primary: #007bff; --accent: #d63384; --success: #28a745; --danger: #dc3545; }
+        body { font-family: -apple-system, sans-serif; background: #f0f2f5; margin: 0; padding: 15px; display: flex; flex-direction: column; align-items: center; }
+        
+        .header { text-align: center; margin-bottom: 10px; }
+        .branch-badge { background: var(--primary); color: white; padding: 4px 12px; border-radius: 20px; font-size: 12px; margin-top: 5px; display: inline-block; }
+        
+        #reader { width: 100%; max-width: 500px; border-radius: 12px; overflow: hidden; background: #000; }
+        
+        /* Zoom Control */
+        .camera-controls { width: 100%; max-width: 500px; margin-top: 10px; background: white; padding: 10px; border-radius: 8px; box-sizing: border-box; }
+        .zoom-slider { width: 100%; margin-top: 5px; }
+
+        .info-box { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.08); margin-top: 15px; width: 100%; max-width: 460px; box-sizing: border-box; }
+        #instruction { font-weight: bold; color: var(--accent); text-align: center; margin-bottom: 15px; }
+        
+        .input-group { margin-bottom: 15px; }
+        label { font-size: 12px; color: #666; display: block; margin-bottom: 4px; }
+        input { width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 6px; font-size: 16px; box-sizing: border-box; }
+        
+        #platz-liste { margin-top: 15px; background: #f8f9fa; border-left: 4px solid var(--primary); padding: 10px; display: none; border-radius: 4px; }
+        .btn-container { display: none; gap: 10px; width: 100%; max-width: 500px; margin-top: 20px; }
+        button { flex: 1; padding: 16px; border: none; border-radius: 8px; color: white; font-weight: bold; font-size: 16px; cursor: pointer; }
+        
+        .scan-lock { opacity: 0.4; pointer-events: none; }
+    </style>
+</head>
+<body>
+
+    <div class="header">
+        <h2 style="margin:0;">Lager-Pro System</h2>
+        <div class="branch-badge" id="branch-name">FILIALE 77 HANSEN</div>
+    </div>
+
+    <div id="reader"></div>
+
+    <div class="camera-controls" id="zoom-area" style="display:none;">
+        <label>🔍 Zoom / Fokus Unterstützung:</label>
+        <input type="range" class="zoom-slider" id="zoom-range" min="1" max="5" step="0.1" value="1">
+    </div>
+
+    <div class="info-box" id="ui-main">
+        <div id="instruction">SCHRITT 1: Artikel scannen</div>
+        
+        <div class="input-group">
+            <label>ARTIKELNUMMER</label>
+            <input type="text" id="input-ware" placeholder="Scannen oder Tippen..." onchange="handleWare()">
+            <small id="val-artikel-name" style="color: #666;"></small>
+        </div>
+
+        <div class="input-group">
+            <label>LAGERPLATZ</label>
+            <input type="text" id="input-platz" placeholder="Zielort scannen..." onchange="handlePlatz()">
+        </div>
+
+        <div id="platz-liste">
+            <div style="font-weight:bold; color:var(--primary); font-size:13px;">Inhalt auf Platz:</div>
+            <div id="liste-content" style="font-size:14px; margin-top:5px;"></div>
+        </div>
+
+        <div style="display:flex; justify-content: space-between; margin-top:15px; border-top:1px solid #eee; padding-top:10px;">
+            <div><small>Platz:</small> <br><b id="val-info-platz">---</b></div>
+            <div><small>Bestand:</small> <br><b id="val-bestand">---</b></div>
+        </div>
+    </div>
+
+    <div class="btn-container" id="action-buttons">
+        <button style="background: var(--success);" onclick="submit('EINLAGERN')">EINLAGERN</button>
+        <button style="background: var(--danger);" onclick="submit('AUSLAGERN')">AUSLAGERN</button>
+    </div>
+
+    <script>
+        /** * SETUP: GitHub / Multi-Branch Management
+         * Einfach die WebApp-URL pro Filiale hier austauschen
+         */
+        const APP_CONFIG = {
+            url: "https://script.google.com/macros/s/AKfycbyTa4QGNsdcAkwjZoTTuMPmK4knlht_nOjnaXL1U_sTeY6kE2JoL2nAaU3ObGiaMGibBQ/exec",
+            branch: "Filiale 77 Hansen"
+        };
+
+        let scanner;
+        let isLocked = false;
+
+        async function startScanner() {
+            scanner = new Html5Qrcode("reader");
+            const config = { fps: 15, qrbox: { width: 250, height: 250 } };
+            
+            await scanner.start({ facingMode: "environment" }, config, (text) => {
+                if (isLocked) return;
+                processScan(text);
+            });
+
+            // Kamera-Fähigkeiten prüfen (Zoom)
+            const capabilities = scanner.getRunningTrackCapabilities();
+            const settings = scanner.getRunningTrackSettings();
+            if (capabilities.zoom) {
+                const zoomControl = document.getElementById('zoom-range');
+                const zoomArea = document.getElementById('zoom-area');
+                zoomArea.style.display = "block";
+                zoomControl.min = capabilities.zoom.min;
+                zoomControl.max = capabilities.zoom.max;
+                zoomControl.step = capabilities.zoom.step;
+                zoomControl.value = settings.zoom;
+                zoomControl.addEventListener('input', e => {
+                    scanner.applyVideoConstraints({ advanced: [{ zoom: e.target.value }] });
+                });
+            }
+        }
+
+        function processScan(text) {
+            vibrate();
+            lockUI(true);
+            const inputWare = document.getElementById('input-ware');
+            const inputPlatz = document.getElementById('input-platz');
+
+            if (!inputWare.value) {
+                inputWare.value = text;
+                handleWare();
+            } else if (!inputPlatz.value) {
+                if (text === inputWare.value) {
+                    alert("Platz darf nicht gleich Artikel sein!");
+                    lockUI(false);
+                } else {
+                    inputPlatz.value = text;
+                    handlePlatz();
+                }
+            }
+        }
+
+        async function handleWare() {
+            const val = document.getElementById('input-ware').value;
+            document.getElementById('instruction').innerText = "Prüfe Artikel...";
+            try {
+                const res = await fetch(`${APP_CONFIG.url}?action=getInfo&ware=${encodeURIComponent(val)}`);
+                const data = await res.json();
+                document.getElementById('val-info-platz').innerText = data.platz;
+                document.getElementById('val-bestand').innerText = data.bestand;
+                document.getElementById('val-artikel-name').innerText = data.name;
+                document.getElementById('instruction').innerText = "SCHRITT 2: Platz scannen";
+            } catch (e) { console.error(e); }
+            lockUI(false);
+        }
+
+        async function handlePlatz() {
+            const val = document.getElementById('input-platz').value;
+            try {
+                const res = await fetch(`${APP_CONFIG.url}?action=getPlatzInfo&platz=${encodeURIComponent(val)}`);
+                const data = await res.json();
+                const content = document.getElementById('liste-content');
+                content.innerHTML = data.artikel.length ? 
+                    data.artikel.map(a => `<div>${a.name}: <b>${a.menge}</b></div>`).join('') : "Leer";
+                document.getElementById('platz-liste').style.display = "block";
+                document.getElementById('action-buttons').style.display = "flex";
+                document.getElementById('instruction').innerText = "Bereit zum Buchen";
+            } catch (e) { console.error(e); }
+            lockUI(false);
+        }
+
+        function submit(type) {
+            lockUI(true);
+            const ware = document.getElementById('input-ware').value;
+            const platz = document.getElementById('input-platz').value;
+            const params = `?ware=${encodeURIComponent(ware)}&platz=${encodeURIComponent(platz)}&typ=${type}`;
+            
+            fetch(APP_CONFIG.url + params, { mode: 'no-cors' }).then(() => {
+                alert("Erfolgreich!");
+                location.reload(); // Einfachster Reset
+            });
+        }
+
+        function lockUI(state) {
+            isLocked = state;
+            document.getElementById('ui-main').classList.toggle('scan-lock', state);
+        }
+
+        function vibrate() { if (navigator.vibrate) navigator.vibrate(60); }
+
+        window.onload = startScanner;
+    </script>
+</body>
+</html>
