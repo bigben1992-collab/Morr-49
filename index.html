@@ -7,49 +7,60 @@
     <script src="https://unpkg.com/html5-qrcode"></script>
     <style>
         :root { --primary: #007bff; --accent: #d63384; --success: #28a745; --danger: #dc3545; }
-        body { font-family: -apple-system, sans-serif; background: #f0f2f5; margin: 0; padding: 0; display: flex; flex-direction: column; height: 100vh; }
+        body { font-family: -apple-system, sans-serif; background: #f0f2f5; margin: 0; padding: 0; display: flex; flex-direction: column; height: 100dvh; overflow: hidden; }
         
         /* Kamera-Bereich */
-        #reader { width: 100%; min-height: 300px; height: 40vh; background: #000; }
+        #reader { 
+            width: 100%; 
+            height: 45vh; 
+            background: #000; 
+            overflow: hidden; /* Wichtig für digitalen Zoom! */
+            position: relative;
+        }
+
+        /* Verhindert, dass das Video-Element bei digitalem Zoom Layout-Probleme macht */
+        #reader video {
+            object-fit: cover;
+        }
         
-        /* Container für die Bedienelemente */
         .ui-wrapper { 
             flex: 1; 
             width: 100%; 
             background: white; 
             border-radius: 20px 20px 0 0; 
             margin-top: -20px; 
-            z-index: 999; /* Sicherstellen, dass es oben liegt */
+            z-index: 1000;
             padding: 15px; 
             box-sizing: border-box; 
             box-shadow: 0 -5px 15px rgba(0,0,0,0.2);
             overflow-y: auto;
+            padding-bottom: env(safe-area-inset-bottom);
         }
 
-        /* ZOOM-STEUERUNG ERZWINGEN */
         .zoom-box { 
-            display: block !important; 
-            background: #f1f3f5; 
-            padding: 15px; 
+            display: block; 
+            background: #f8f9fa; 
+            padding: 12px; 
             border-radius: 12px; 
-            margin-bottom: 20px; 
-            border: 2px solid var(--primary);
+            margin-bottom: 15px; 
+            border: 1px solid #ddd;
         }
         
         .zoom-slider { 
             width: 100%; 
-            height: 40px; 
-            margin-top: 10px;
+            height: 35px; 
+            margin-top: 8px;
             cursor: pointer;
         }
 
-        #instruction { font-weight: bold; color: var(--accent); text-align: center; margin-bottom: 10px; }
-        .input-group { margin-bottom: 15px; }
-        label { font-size: 12px; font-weight: bold; color: #555; display: block; }
-        input[type="text"] { width: 100%; padding: 12px; border: 1px solid #ccc; border-radius: 8px; font-size: 16px; box-sizing: border-box; }
+        #instruction { font-weight: bold; color: var(--accent); text-align: center; margin-bottom: 10px; font-size: 14px; }
+        .input-group { margin-bottom: 12px; }
+        label { font-size: 11px; font-weight: bold; color: #777; display: block; text-transform: uppercase; }
+        input[type="text"] { width: 100%; padding: 12px; border: 1px solid #ccc; border-radius: 8px; font-size: 16px; box-sizing: border-box; background: #fafafa; }
         
-        .btn-row { display: none; gap: 10px; margin-top: 20px; }
-        button { flex: 1; padding: 18px; border: none; border-radius: 10px; color: white; font-weight: bold; font-size: 16px; }
+        .btn-row { display: none; gap: 10px; margin-top: 15px; }
+        button { flex: 1; padding: 16px; border: none; border-radius: 10px; color: white; font-weight: bold; font-size: 16px; transition: opacity 0.2s; }
+        button:active { opacity: 0.7; }
     </style>
 </head>
 <body>
@@ -57,22 +68,21 @@
     <div id="reader"></div>
 
     <div class="ui-wrapper">
-        <div id="instruction">KAMERA WIRD GESTARTET...</div>
+        <div id="instruction">INITIALISIERE KAMERA...</div>
         
-        <div class="zoom-box" id="zoom-area">
-            <label>🔍 ZOOM (Schieberegler nutzen):</label>
-            <input type="range" class="zoom-slider" id="zoom-range" min="1" max="5" step="0.1" value="1">
+        <div class="zoom-box">
+            <label id="zoom-label">🔍 ZOOM: 1.0x</label>
+            <input type="range" class="zoom-slider" id="zoom-range" min="1" max="4" step="0.1" value="1">
         </div>
 
         <div class="input-group">
-            <label>ARTIKEL</label>
-            <input type="text" id="input-ware" placeholder="Bitte scannen..." readonly>
-            <span id="val-artikel-name" style="font-weight:bold; color:var(--primary)"></span>
+            <label>ARTIKEL / EAN</label>
+            <input type="text" id="input-ware" placeholder="Scannen..." readonly>
         </div>
 
         <div class="input-group">
             <label>LAGERPLATZ</label>
-            <input type="text" id="input-platz" placeholder="Bitte scannen..." readonly>
+            <input type="text" id="input-platz" placeholder="Warte auf Artikel..." readonly>
         </div>
 
         <div class="btn-row" id="action-buttons">
@@ -89,68 +99,110 @@
 
         let scanner;
         let cameraTrack = null;
+        let isHardwareZoomSupported = false;
 
         async function init() {
-            // Erst den Slider aktivieren
             setupZoomListener();
             
-            // Dann Scanner starten
             scanner = new Html5Qrcode("reader");
+            const config = { 
+                fps: 20, 
+                qrbox: { width: 250, height: 150 },
+                aspectRatio: 1.0
+            };
+
             try {
                 await scanner.start(
                     { facingMode: "environment" }, 
-                    { fps: 20, qrbox: { width: 250, height: 150 } },
+                    config,
                     (text) => { processScan(text); }
                 );
+                
                 document.getElementById('instruction').innerText = "BEREIT: ARTIKEL SCANNEN";
                 
-                // Track für Zoom holen
+                // Kurz warten, bis der Track stabil ist
                 setTimeout(() => {
                     cameraTrack = scanner.getRunningTrack();
-                    updateZoomLimits();
-                }, 1500);
+                    checkZoomCapabilities();
+                }, 1000);
 
             } catch (e) {
-                document.getElementById('instruction').innerText = "FEHLER: Kamera-Zugriff prüfen!";
+                document.getElementById('instruction').innerText = "FEHLER: Kamera nicht gefunden!";
+                console.error(e);
             }
         }
 
-        function setupZoomListener() {
-            const slider = document.getElementById('zoom-range');
-            slider.addEventListener('input', (e) => {
-                if (cameraTrack) {
-                    cameraTrack.applyConstraints({
-                        advanced: [{ zoom: parseFloat(e.target.value) }]
-                    }).catch(err => console.error("Hardware Zoom Error", err));
-                }
-            });
-        }
-
-        function updateZoomLimits() {
-            if (cameraTrack && cameraTrack.getCapabilities) {
+        function checkZoomCapabilities() {
+            if (cameraTrack && typeof cameraTrack.getCapabilities === 'function') {
                 const caps = cameraTrack.getCapabilities();
                 if (caps.zoom) {
                     const slider = document.getElementById('zoom-range');
                     slider.min = caps.zoom.min;
                     slider.max = caps.zoom.max;
                     slider.step = caps.zoom.step;
+                    isHardwareZoomSupported = true;
+                    console.log("Hardware Zoom aktiv");
                 }
             }
+            if (!isHardwareZoomSupported) {
+                console.log("Nutze Digitalen Zoom Fallback");
+            }
+        }
+
+        function setupZoomListener() {
+            const slider = document.getElementById('zoom-range');
+            const label = document.getElementById('zoom-label');
+
+            slider.addEventListener('input', (e) => {
+                const val = parseFloat(e.target.value);
+                label.innerText = `🔍 ZOOM: ${val.toFixed(1)}x`;
+
+                // 1. Hardware Zoom Versuch
+                if (isHardwareZoomSupported && cameraTrack) {
+                    cameraTrack.applyConstraints({
+                        advanced: [{ zoom: val }]
+                    }).catch(err => console.error("Hardware Zoom Error", err));
+                } 
+                
+                // 2. Digital Zoom Fallback (immer anwenden oder als Fallback)
+                // Wir skalieren das Video-Element im Container
+                const video = document.querySelector('#reader video');
+                if (video) {
+                    video.style.transform = `scale(${val})`;
+                    video.style.transformOrigin = "center center";
+                }
+            });
         }
 
         function processScan(text) {
             const inputWare = document.getElementById('input-ware');
             const inputPlatz = document.getElementById('input-platz');
 
+            // Akustisches Feedback (optional)
+            // if (window.navigator.vibrate) window.navigator.vibrate(100);
+
             if (!inputWare.value) {
                 inputWare.value = text;
-                // Hier käme dein handleWare() Fetch...
                 document.getElementById('instruction').innerText = "NÄCHSTER SCHRITT: PLATZ SCANNEN";
+                document.getElementById('instruction').style.color = "var(--primary)";
             } else if (!inputPlatz.value && text !== inputWare.value) {
                 inputPlatz.value = text;
                 document.getElementById('action-buttons').style.display = "flex";
                 document.getElementById('instruction').innerText = "BUCHUNG BEREIT";
+                document.getElementById('instruction').style.color = "var(--success)";
             }
+        }
+
+        function submit(typ) {
+            const data = {
+                typ: typ,
+                artikel: document.getElementById('input-ware').value,
+                platz: document.getElementById('input-platz').value,
+                filiale: APP_CONFIG.branch
+            };
+            
+            alert("Buchung erfolgreich: " + typ + "\n" + data.artikel + " auf " + data.platz);
+            location.reload(); // Reset für nächsten Scan
         }
 
         window.onload = init;
