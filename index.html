@@ -8,21 +8,36 @@
     <style>
         :root { --primary: #007bff; --accent: #d63384; --success: #28a745; --danger: #dc3545; }
         body { font-family: -apple-system, sans-serif; background: #f0f2f5; margin: 0; padding: 0; display: flex; flex-direction: column; align-items: center; height: 100vh; overflow: hidden; }
-        #reader { width: 100%; height: 45vh; background: #000; }
+        
+        #reader { width: 100%; height: 45vh; background: #000; position: relative; }
         #reader video { object-fit: cover !important; height: 45vh !important; }
+
+        /* Container für die UI */
         .container { flex: 1; width: 100%; overflow-y: auto; padding: 15px; box-sizing: border-box; background: white; border-radius: 20px 20px 0 0; margin-top: -20px; z-index: 10; box-shadow: 0 -5px 15px rgba(0,0,0,0.1); }
+        
         #instruction { font-weight: bold; color: var(--accent); text-align: center; margin-bottom: 10px; font-size: 14px; }
-        .camera-controls { background: #f8f9fa; padding: 10px; border-radius: 8px; margin-bottom: 15px; border: 1px solid #ddd; display: none; }
-        .zoom-slider { width: 100%; height: 30px; cursor: pointer; }
+        
+        /* Zoom-Bereich jetzt IMMER sichtbar */
+        .camera-controls { 
+            background: #f8f9fa; 
+            padding: 12px; 
+            border-radius: 10px; 
+            margin-bottom: 15px; 
+            border: 2px solid #eee; 
+        }
+        .zoom-slider { width: 100%; height: 40px; cursor: pointer; accent-color: var(--primary); }
+        
         .input-group { margin-bottom: 10px; }
-        label { font-size: 11px; color: #666; font-weight: bold; text-transform: uppercase; }
-        input { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 6px; font-size: 16px; box-sizing: border-box; }
+        label { font-size: 11px; color: #666; font-weight: bold; text-transform: uppercase; display: block; margin-bottom: 4px; }
+        input[type="text"] { width: 100%; padding: 12px; border: 1px solid #ccc; border-radius: 6px; font-size: 16px; box-sizing: border-box; }
+        
         #val-artikel-name { color: var(--primary); font-size: 13px; font-weight: bold; display: block; margin-top: 2px; }
         #platz-liste { margin-top: 10px; background: #eef2f7; border-left: 4px solid var(--primary); padding: 8px; display: none; font-size: 13px; }
         .status-row { display: flex; justify-content: space-between; margin-top: 10px; font-size: 13px; background: #f0f2f5; padding: 8px; border-radius: 6px; }
+
         .btn-container { display: none; gap: 10px; margin-top: 15px; padding-bottom: 30px; }
-        button { flex: 1; padding: 15px; border: none; border-radius: 8px; color: white; font-weight: bold; font-size: 16px; transition: opacity 0.2s; }
-        button:active { opacity: 0.7; }
+        button { flex: 1; padding: 15px; border: none; border-radius: 8px; color: white; font-weight: bold; font-size: 16px; }
+        
         .scan-lock { opacity: 0.5; pointer-events: none; }
     </style>
 </head>
@@ -33,20 +48,20 @@
     <div class="container" id="ui-main">
         <div id="instruction">SCHRITT 1: Artikel scannen</div>
         
-        <div class="camera-controls" id="zoom-area">
-            <label>🔍 Zoom-Steuerung</label>
+        <div class="camera-controls">
+            <label>🔍 Manueller Zoom / Fokus-Hilfe</label>
             <input type="range" class="zoom-slider" id="zoom-range" min="1" max="5" step="0.1" value="1">
         </div>
 
         <div class="input-group">
             <label>Artikelnummer</label>
-            <input type="text" id="input-ware" placeholder="Warte auf Scan..." onchange="handleWare()">
+            <input type="text" id="input-ware" placeholder="Scan..." onchange="handleWare()">
             <span id="val-artikel-name"></span>
         </div>
 
         <div class="input-group">
             <label>Lagerplatz</label>
-            <input type="text" id="input-platz" placeholder="Warte auf Scan..." onchange="handlePlatz()">
+            <input type="text" id="input-platz" placeholder="Scan..." onchange="handlePlatz()">
         </div>
 
         <div id="platz-liste">
@@ -54,7 +69,7 @@
         </div>
 
         <div class="status-row">
-            <span>Platz-Info: <b id="val-info-platz">---</b></span>
+            <span>Platz: <b id="val-info-platz">---</b></span>
             <span>Bestand: <b id="val-bestand">---</b></span>
         </div>
 
@@ -66,7 +81,7 @@
 
     <script>
         const APP_CONFIG = {
-            url: "https://script.google.com/macros/s/AKfycbxXe3A2Ym0gm_r4R_HdEU_B8afvzc645--F031Y60znDFIEVb_RtUVeHA8vpXF84XzSCw/exec", 
+            url: "https://script.google.com/macros/s/AKfycbxXe3A2Ym0gm_r4R_HdEU_B8afvzc645--F031Y60znDFIEVb_RtUVeHA8vpXF84XzSCw/exec", // <--- HIER DEINE URL EINTRAGEN
             branch: "Filiale 77 Hansen"
         };
 
@@ -78,8 +93,9 @@
             const config = { 
                 fps: 20, 
                 qrbox: (viewWidth, viewHeight) => {
-                    return { width: viewWidth * 0.7, height: viewHeight * 0.5 };
-                }
+                    return { width: viewWidth * 0.8, height: viewHeight * 0.6 };
+                },
+                aspectRatio: 1.0
             };
             
             try {
@@ -89,30 +105,38 @@
                     (text) => { if (!isLocked) processScan(text); }
                 );
                 
-                // Verzögerung für Hardware-Initialisierung (Zoom)
-                setTimeout(initZoom, 1000);
+                // Nach Start versuchen, die Schieberegler-Grenzen an die Kamera anzupassen
+                setTimeout(syncZoomCapabilities, 1500);
 
             } catch (err) {
-                console.error("Scanner konnte nicht starten:", err);
-                alert("Kamerafehler. Bitte Seite neu laden und Zugriff erlauben.");
+                console.error("Kamera-Fehler:", err);
+                document.getElementById('instruction').innerText = "Kamera blockiert!";
             }
         }
 
-        function initZoom() {
+        function syncZoomCapabilities() {
             try {
                 const track = scanner.getRunningTrack();
                 const capabilities = track.getCapabilities();
+                const zoomControl = document.getElementById('zoom-range');
+
                 if (capabilities.zoom) {
-                    const zoomControl = document.getElementById('zoom-range');
-                    document.getElementById('zoom-area').style.display = "block";
                     zoomControl.min = capabilities.zoom.min;
                     zoomControl.max = capabilities.zoom.max;
                     zoomControl.step = capabilities.zoom.step;
-                    zoomControl.oninput = (e) => {
-                        track.applyConstraints({ advanced: [{ zoom: e.target.value }] });
-                    };
                 }
-            } catch (e) { console.warn("Zoom-Hardware nicht erkannt."); }
+
+                // Event-Listener für den Slider
+                zoomControl.oninput = async (e) => {
+                    try {
+                        await track.applyConstraints({ advanced: [{ zoom: e.target.value }] });
+                    } catch (zoomErr) {
+                        console.warn("Zoom-Anwendung fehlgeschlagen", zoomErr);
+                    }
+                };
+            } catch (e) {
+                console.log("Zoom von Hardware/Browser nicht unterstützt.");
+            }
         }
 
         function processScan(text) {
@@ -123,13 +147,9 @@
             if (!inputWare.value) {
                 inputWare.value = text;
                 handleWare();
-            } else if (!inputPlatz.value) {
-                if (text === inputWare.value) {
-                    alert("Platz und Artikel dürfen nicht identisch sein!");
-                } else {
-                    inputPlatz.value = text;
-                    handlePlatz();
-                }
+            } else if (!inputPlatz.value && text !== inputWare.value) {
+                inputPlatz.value = text;
+                handlePlatz();
             }
         }
 
@@ -137,8 +157,6 @@
             const val = document.getElementById('input-ware').value;
             if (!val) return;
             lockUI(true);
-            document.getElementById('instruction').innerText = "Prüfe Artikel...";
-            
             try {
                 const res = await fetch(`${APP_CONFIG.url}?action=getInfo&ware=${encodeURIComponent(val)}`);
                 const data = await res.json();
@@ -147,7 +165,7 @@
                 document.getElementById('val-artikel-name').innerText = data.name;
                 document.getElementById('instruction').innerText = "SCHRITT 2: Platz scannen";
             } catch (e) { 
-                document.getElementById('val-artikel-name').innerText = "Neu/Unbekannt";
+                document.getElementById('val-artikel-name').innerText = "Unbekannt";
             }
             lockUI(false);
         }
@@ -156,17 +174,15 @@
             const val = document.getElementById('input-platz').value;
             if (!val) return;
             lockUI(true);
-            
             try {
                 const res = await fetch(`${APP_CONFIG.url}?action=getPlatzInfo&platz=${encodeURIComponent(val)}`);
                 const data = await res.json();
                 const content = document.getElementById('liste-content');
                 content.innerHTML = data.artikel.length ? 
-                    data.artikel.map(a => `<div>${a.name}: <b>${a.menge} Stk.</b></div>`).join('') : "Platz ist leer";
+                    data.artikel.map(a => `<div>${a.name}: <b>${a.menge} Stk.</b></div>`).join('') : "Platz leer";
                 document.getElementById('platz-liste').style.display = "block";
                 document.getElementById('action-buttons').style.display = "flex";
                 document.getElementById('instruction').innerText = "Bereit zum Buchen";
-                document.getElementById('instruction').style.color = "var(--success)";
             } catch (e) { console.error(e); }
             lockUI(false);
         }
@@ -179,13 +195,10 @@
             
             fetch(url, { mode: 'no-cors' })
                 .then(() => {
-                    alert(`${type} erfolgreich!`);
+                    alert(`${type} gebucht!`);
                     location.reload(); 
                 })
-                .catch(() => {
-                    alert("Netzwerkfehler!");
-                    lockUI(false);
-                });
+                .catch(() => { alert("Fehler!"); lockUI(false); });
         }
 
         function lockUI(state) {
@@ -197,3 +210,4 @@
     </script>
 </body>
 </html>
+
