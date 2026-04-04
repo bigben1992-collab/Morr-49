@@ -1,120 +1,127 @@
 <!DOCTYPE html>
 <html lang="de">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Lager Pro | GitHub Edition</title>
-  <script src="https://unpkg.com/html5-qrcode"></script>
-  <style>
-    :root { --primary: #2563eb; --bg: #f8fafc; }
-    body { font-family: sans-serif; background: var(--bg); padding: 15px; margin: 0; }
-    .container { max-width: 500px; margin: auto; }
-    .nav { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-bottom: 20px; }
-    button { padding: 12px; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; }
-    button.active { background: var(--primary); color: white; }
-    .card { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); display: none; }
-    .card.active { display: block; }
-    input { width: 100%; padding: 12px; margin: 8px 0; border: 1px solid #ddd; border-radius: 6px; box-sizing: border-box; }
-    .btn-main { width: 100%; background: var(--primary); color: white; margin-top: 10px; font-size: 1rem; }
-    #reader-waren, #reader-platz { width: 100%; border-radius: 8px; overflow: hidden; }
-    .result-box { background: #eee; padding: 15px; border-radius: 8px; margin-top: 10px; min-height: 40px; }
-  </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Lager Pro | GitHub Edition</title>
+  <script src="https://unpkg.com/html5-qrcode"></script>
+  <style>
+    :root { --primary: #2563eb; --bg: #f8fafc; }
+    body { font-family: sans-serif; background: var(--bg); padding: 15px; margin: 0; }
+    .container { max-width: 500px; margin: auto; }
+    .nav { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-bottom: 20px; }
+    button { padding: 12px; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; transition: 0.3s; }
+    button.active { background: var(--primary); color: white; }
+    .card { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); display: none; }
+    .card.active { display: block; }
+    input { width: 100%; padding: 12px; margin: 8px 0; border: 1px solid #ddd; border-radius: 6px; box-sizing: border-box; }
+    .btn-main { width: 100%; background: var(--primary); color: white; margin-top: 10px; font-size: 1rem; }
+    .btn-main:disabled { background: #ccc; }
+    #reader-waren, #reader-platz { width: 100%; border-radius: 8px; overflow: hidden; margin-bottom: 10px; }
+    .result-box { background: #eee; padding: 15px; border-radius: 8px; margin-top: 10px; min-height: 40px; }
+  </style>
 </head>
 <body>
 
 <div class="container">
-  <input type="hidden" id="backend-url" value="https://script.google.com/macros/s/AKfycbzjTFa1kggYj9oheoEwloV0wfBIYli1BjyG7CWphA9Tb5ii334xx2L1ksoeN54SmTaSAw/exec">
+  <input type="hidden" id="backend-url" value="https://script.google.com/macros/s/AKfycbyYLtCnQLD60V3_SgjP95zL0Y4OMYsTl-ctSQJgjOdQES0IXpTOVEmNwuqerMDxywA4aA/exec">
 
-  <div class="nav">
-    <button id="btn-waren" class="active" onclick="switchTab('warenbewegung')">WAREN</button>
-    <button id="btn-platz" onclick="switchTab('platzpruefung')">PRÜFUNG</button>
-    <button id="btn-settings" onclick="switchTab('einstellungen')">SETUP</button>
-  </div>
+  <div class="nav">
+    <button id="btn-waren" class="active" onclick="switchTab('warenbewegung')">WAREN</button>
+    <button id="btn-platz" onclick="switchTab('platzpruefung')">PRÜFUNG</button>
+    <button id="btn-settings" onclick="switchTab('einstellungen')">SETUP</button>
+  </div>
 
-  <div id="warenbewegung" class="card active">
-    <h3>📦 Warenbewegung</h3>
-    <div id="reader-waren"></div>
-    <input type="text" id="w-artikel" placeholder="Artikel-Barcode">
-    <input type="number" id="w-menge" placeholder="Menge" value="1">
-    <input type="text" id="w-platz" placeholder="Lagerplatz">
-    <button class="btn-main" onclick="apiCall('buchung')">Buchen</button>
-  </div>
+  <div id="warenbewegung" class="card active">
+    <h3>📦 Warenbewegung</h3>
+    <div id="reader-waren"></div>
+    <input type="text" id="w-artikel" placeholder="Artikel-Barcode">
+    <input type="number" id="w-menge" placeholder="Menge" value="1">
+    <input type="text" id="w-platz" placeholder="Lagerplatz">
+    <button id="btn-submit" class="btn-main" onclick="apiCall('buchung')">Jetzt Buchen</button>
+  </div>
 
-  <div id="platzpruefung" class="card">
-    <h3>🔍 Platzprüfung</h3>
-    <div id="reader-platz"></div>
-    <input type="text" id="p-platz" placeholder="Platz scannen..." onchange="apiCall('pruefung')">
-    <div id="p-ergebnis" class="result-box">Warte auf Scan...</div>
-  </div>
+  <div id="platzpruefung" class="card">
+    <h3>🔍 Platzprüfung</h3>
+    <div id="reader-platz"></div>
+    <input type="text" id="p-platz" placeholder="Platz scannen..." onchange="apiCall('pruefung')">
+    <div id="p-ergebnis" class="result-box">Warte auf Scan...</div>
+  </div>
 
-  <div id="einstellungen" class="card">
-    <h3>⚙️ Setup</h3>
-    <p>Host: GitHub Pages</p>
-    <button onclick="location.reload()" style="width:100%">Reload App</button>
-  </div>
+  <div id="einstellungen" class="card">
+    <h3>⚙️ Setup</h3>
+    <p>Status: <span id="status-text">Verbunden mit GitHub</span></p>
+    <button onclick="location.reload()" style="width:100%">App neu laden</button>
+  </div>
 </div>
 
 <script>
-  let html5QrCode;
-  const url = document.getElementById('backend-url').value;
+  let html5QrCode;
+  
+  async function apiCall(modus) {
+    const url = document.getElementById('backend-url').value;
+    const submitBtn = document.getElementById('btn-submit');
+    const resultBox = document.getElementById('p-ergebnis');
+    
+    if(modus === 'pruefung') resultBox.innerHTML = "⏳ Suche im System...";
+    if(submitBtn) submitBtn.disabled = true;
 
-  async function apiCall(modus) {
-    const loader = document.getElementById('p-ergebnis');
-    if(modus === 'pruefung') loader.innerHTML = "⏳ Suche...";
-    
-    const payload = {
-      aktion: modus,
-      daten: modus === 'buchung' ? {
-        typ: "Bewegung",
-        artikel: document.getElementById('w-artikel').value,
-        menge: document.getElementById('w-menge').value,
-        platz: document.getElementById('w-platz').value
-      } : null,
-      platzId: modus === 'pruefung' ? document.getElementById('p-platz').value : null
-    };
+    const payload = {
+      aktion: modus,
+      daten: modus === 'buchung' ? {
+        typ: "Bewegung",
+        artikel: document.getElementById('w-artikel').value,
+        menge: document.getElementById('w-menge').value,
+        platz: document.getElementById('w-platz').value
+      } : null,
+      platzId: modus === 'pruefung' ? document.getElementById('p-platz').value : null
+    };
 
-    try {
-      // Fetch an Google Apps Script (Redirects müssen erlaubt sein)
-      const response = await fetch(url, {
-        method: "POST",
-        body: JSON.stringify(payload)
-      });
-      const data = await response.json();
-      
-      if(modus === 'buchung') {
-        alert(data.res);
-        document.getElementById('w-artikel').value = "";
-      } else {
-        const res = data.res;
-        loader.innerHTML = res ? `📦 ${res.artikel} | 🔢 ${res.menge}` : "❌ Nicht gefunden";
-      }
-    } catch (e) {
-      alert("Fehler: Verbindung zum Backend fehlgeschlagen.");
-      console.error(e);
-    }
-  }
+    try {
+      const response = await fetch(url, {
+        method: "POST",
+        mode: "no-cors", // WICHTIG für Google Apps Script von externen Domains
+        body: JSON.stringify(payload)
+      });
 
-  function switchTab(tabId) {
-    document.querySelectorAll('.card').forEach(c => c.classList.remove('active'));
-    document.querySelectorAll('.nav button').forEach(b => b.classList.remove('active'));
-    document.getElementById(tabId).classList.add('active');
-    document.getElementById('btn-' + tabId.substring(0,5)).classList.add('active');
-    if (html5QrCode) html5QrCode.stop().then(() => startScanner(tabId));
-  }
+      // Hinweis: Bei 'no-cors' kann JS die Antwort nicht lesen, 
+      // aber Google führt den Befehl trotzdem aus.
+      
+      if(modus === 'buchung') {
+        alert("Anfrage gesendet! Prüfe dein Sheet in 2-3 Sekunden.");
+        document.getElementById('w-artikel').value = "";
+      } else {
+        resultBox.innerHTML = "Prüfung über GitHub erfordert 'CORS'-Setup. Nutze für Abfragen besser die Google-interne URL.";
+      }
+    } catch (e) {
+      alert("Netzwerkfehler!");
+    } finally {
+      if(submitBtn) submitBtn.disabled = false;
+    }
+  }
 
-  function startScanner(tabId) {
-    const el = tabId === 'warenbewegung' ? "reader-waren" : (tabId === 'platzpruefung' ? "reader-platz" : null);
-    const target = tabId === 'warenbewegung' ? "w-artikel" : "p-platz";
-    if(!el) return;
-    html5QrCode = new Html5Qrcode(el);
-    html5QrCode.start({ facingMode: "environment" }, { fps: 10, qrbox: 250 }, (txt) => {
-      document.getElementById(target).value = txt;
-      if(tabId === 'platzpruefung') apiCall('pruefung');
-      navigator.vibrate(50);
-    }).catch(() => {});
-  }
+  function switchTab(tabId) {
+    document.querySelectorAll('.card').forEach(c => c.classList.remove('active'));
+    document.querySelectorAll('.nav button').forEach(b => b.classList.remove('active'));
+    document.getElementById(tabId).classList.add('active');
+    document.getElementById('btn-' + tabId.substring(0,5)).classList.add('active');
+    if (html5QrCode) html5QrCode.stop().then(() => startScanner(tabId)).catch(() => startScanner(tabId));
+  }
 
-  window.onload = () => startScanner('warenbewegung');
+  function startScanner(tabId) {
+    const elId = tabId === 'warenbewegung' ? "reader-waren" : (tabId === 'platzpruefung' ? "reader-platz" : null);
+    const targetId = tabId === 'warenbewegung' ? "w-artikel" : "p-platz";
+    if(!elId || !document.getElementById(elId)) return;
+    
+    html5QrCode = new Html5Qrcode(elId);
+    html5QrCode.start({ facingMode: "environment" }, { fps: 10, qrbox: 250 }, (txt) => {
+      document.getElementById(targetId).value = txt;
+      if(tabId === 'platzpruefung') apiCall('pruefung');
+      navigator.vibrate(50);
+    }).catch(e => console.log("Scanner Start Stop: ", e));
+  }
+
+  window.onload = () => startScanner('warenbewegung');
 </script>
 </body>
 </html>
