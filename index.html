@@ -1,197 +1,97 @@
 <!DOCTYPE html>
 <html lang="de">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Lager Pro | Super Supreme System</title>
-  <script src="https://unpkg.com/html5-qrcode"></script>
-  <style>
-    :root { --p: #0f172a; --a: #2563eb; --d: #ef4444; --s: #22c55e; --bg: #f8fafc; }
-    * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-    
-    body { font-family: sans-serif; background: var(--bg); margin: 0; padding: 0; color: #334155; }
-
-    /* Header & Logo */
-    header { background: white; height: 70px; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 10px rgba(0,0,0,0.05); position: sticky; top: 0; z-index: 1000; }
-    .logo-container { height: 50px; width: 180px; display: flex; align-items: center; justify-content: center; }
-    .logo-container img { max-width: 100%; max-height: 100%; object-fit: contain; }
-
-    /* Lade-Overlay */
-    #overlay { display: none; position: fixed; inset: 0; background: rgba(255,255,255,0.85); z-index: 3000; flex-direction: column; align-items: center; justify-content: center; backdrop-filter: blur(4px); }
-    .spin { width: 40px; height: 40px; border: 4px solid #f3f3f3; border-top: 4px solid var(--a); border-radius: 50%; animation: s 1s linear infinite; }
-    @keyframes s { to { transform: rotate(360deg); } }
-    .status-msg { margin-top: 15px; font-weight: bold; font-size: 14px; color: var(--p); }
-
-    .content { max-width: 450px; margin: 0 auto; padding: 15px; }
-
-    /* Nav Buttons */
-    .nav { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; margin-bottom: 20px; }
-    .nav-btn { background: white; border: 1px solid #e2e8f0; border-radius: 12px; padding: 12px 2px; font-size: 10px; font-weight: 800; color: #64748b; cursor: pointer; text-transform: uppercase; }
-    .nav-btn.active { background: var(--a); color: white; border-color: var(--a); box-shadow: 0 4px 10px rgba(37, 99, 235, 0.2); }
-
-    /* Cards */
-    .card { background: white; padding: 20px; border-radius: 20px; box-shadow: 0 10px 20px rgba(0,0,0,0.04); display: none; border: 1px solid #f1f5f9; }
-    .card.active { display: block; animation: f 0.2s ease-out; }
-    @keyframes f { from { opacity: 0; transform: translateY(10px); } }
-
-    h3 { margin: 0 0 15px 0; font-size: 1.1rem; color: var(--p); border-bottom: 2px solid #f8fafc; padding-bottom: 8px; }
-    input { width: 100%; padding: 14px; margin: 8px 0; border: 1px solid #e2e8f0; border-radius: 12px; font-size: 16px; background: #f8fafc; outline: none; }
-    input:focus { border-color: var(--a); background: white; }
-
-    .actions { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 10px; }
-    .btn { padding: 16px; border: none; border-radius: 14px; color: white; font-weight: bold; cursor: pointer; font-size: 14px; }
-    .btn-in { background: var(--s); }
-    .btn-out { background: var(--d); }
-
-    /* Scan & Results */
-    .reader { width: 100%; border-radius: 15px; overflow: hidden; background: #000; margin-bottom: 10px; aspect-ratio: 1; border: 2px solid #eee; }
-    .res { background: #f8fafc; padding: 15px; border-radius: 12px; margin-top: 15px; border-left: 5px solid var(--a); min-height: 60px; font-size: 14px; }
-    table { width: 100%; border-collapse: collapse; margin-top: 10px; }
-    td { padding: 10px 5px; border-bottom: 1px solid #f1f5f9; }
-    th { text-align: left; color: #94a3b8; font-size: 11px; text-transform: uppercase; }
-  </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Buchen | Lager Pro</title>
+  <script src="https://unpkg.com/html5-qrcode"></script>
+  <style>
+    :root { --p: #0f172a; --a: #2563eb; --d: #ef4444; --s: #22c55e; --bg: #f8fafc; }
+    body { font-family: sans-serif; background: var(--bg); margin: 0; padding: 0; }
+    header { background: white; height: 70px; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
+    .logo { height: 45px; }
+    .nav { display: grid; grid-template-columns: repeat(4, 1fr); gap: 5px; padding: 15px; max-width: 450px; margin: 0 auto; }
+    .nav a { text-decoration: none; background: white; border: 1px solid #e2e8f0; border-radius: 10px; padding: 12px 2px; font-size: 10px; font-weight: 800; color: #64748b; text-align: center; text-transform: uppercase; }
+    .nav a.active { background: var(--a); color: white; border-color: var(--a); }
+    .container { max-width: 450px; margin: 0 auto; padding: 0 15px; }
+    .card { background: white; padding: 20px; border-radius: 20px; box-shadow: 0 4px 6px rgba(0,0,0,0.02); }
+    input { width: 100%; padding: 14px; margin: 8px 0; border: 1px solid #e2e8f0; border-radius: 12px; font-size: 16px; outline: none; }
+    .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px; }
+    .btn { padding: 16px; border: none; border-radius: 12px; color: white; font-weight: bold; cursor: pointer; }
+    #reader { width: 100%; border-radius: 15px; overflow: hidden; aspect-ratio: 1; background: #000; margin-bottom: 10px; }
+    #overlay { display: none; position: fixed; inset: 0; background: rgba(255,255,255,0.8); z-index: 2000; flex-direction: column; align-items: center; justify-content: center; }
+    .loader { width: 30px; height: 30px; border: 3px solid #f3f3f3; border-top: 3px solid var(--a); border-radius: 50%; animation: spin 1s linear infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+  </style>
 </head>
 <body>
 
-<div id="overlay">
-  <div class="spin"></div>
-  <div id="status-text" class="status-msg">Verarbeite...</div>
+<div id="overlay"><div class="loader"></div><p id="stat">Verarbeite...</p></div>
+
+<header><img src="logo.png" class="logo"></header>
+
+<div class="nav">
+  <a href="index.html" class="active">Buchen</a>
+  <a href="platz.html">Platz</a>
+  <a href="suche.html">Suche</a>
+  <a href="setup.html">Setup</a>
 </div>
 
-<header>
-  <div class="logo-container"><img src="logo.png" alt="Logo"></div>
-</header>
-
-<div class="content">
-  <input type="hidden" id="url" value="https://script.google.com/macros/s/AKfycbza2NnlgD7jnRzUPUxoISOPCkgkKxXDfBdzFr0do158m4b8cMTUsWTYT6EFsrS_SSojgA/exec">
-
-  <div class="nav">
-    <button id="b-buchen" class="nav-btn active" onclick="tab('buchen')">Buchen</button>
-    <button id="b-platz" class="nav-btn" onclick="tab('platz')">Platz</button>
-    <button id="b-suche" class="nav-btn" onclick="tab('suche')">Suche</button>
-    <button id="b-setup" class="nav-btn" onclick="tab('setup')">Setup</button>
-  </div>
-
-  <div id="buchen" class="card active">
-    <h3>📦 Warenbewegung</h3>
-    <div id="r-buchen" class="reader"></div>
-    <input type="text" id="w-p" placeholder="Platz scannen">
-    <input type="text" id="w-a" placeholder="Artikel scannen">
-    <input type="number" id="w-m" value="1" placeholder="Menge">
-    <div class="actions">
-      <button class="btn btn-in" onclick="doBuchen('Einlagerung')">📥 EIN</button>
-      <button class="btn btn-out" onclick="doBuchen('Entnahme')">📤 AUS</button>
-    </div>
-  </div>
-
-  <div id="platz" class="card">
-    <h3>🔍 Platz-Info</h3>
-    <div id="r-platz" class="reader"></div>
-    <input type="text" id="p-p" placeholder="Platz scannen..." onchange="doPlatz()">
-    <div id="res-p" class="res">Scanne einen Platz für Details...</div>
-  </div>
-
-  <div id="suche" class="card">
-    <h3>🔎 Bestands-Suche</h3>
-    <div id="r-suche" class="reader"></div>
-    <input type="text" id="s-a" placeholder="Artikel scannen..." onchange="doSuche()">
-    <div id="res-s" class="res">Wo liegt die Ware?</div>
-  </div>
-
-  <div id="setup" class="card">
-    <h3>⚙️ Systemeinstellungen</h3>
-    <button onclick="location.reload()" style="width:100%; background:var(--p); color:white; padding:15px; border-radius:12px; border:none; font-weight:bold;">🔄 App aktualisieren</button>
-  </div>
+<div class="container">
+  <div class="card">
+    <h3>📦 Buchung</h3>
+    <div id="reader"></div>
+    <input type="text" id="w-p" placeholder="Platz scannen">
+    <input type="text" id="w-a" placeholder="Artikel scannen">
+    <input type="number" id="w-m" value="1">
+    <div class="grid">
+      <button class="btn" style="background:var(--s)" onclick="send('Einlagerung')">EIN</button>
+      <button class="btn" style="background:var(--d)" onclick="send('Entnahme')">AUS</button>
+    </div>
+  </div>
 </div>
 
 <script>
-  let scanner;
-  const getUrl = () => document.getElementById('url').value;
+  var api = "DEINE_GOOGLE_URL";
+  var scanner = new Html5Qrcode("reader");
 
-  function setStatus(show, txt = "Lade...") {
-    document.getElementById('status-text').innerText = txt;
-    document.getElementById('overlay').style.display = show ? 'flex' : 'none';
-  }
+  function setStatus(s, t="Lade...") { 
+    document.getElementById('stat').innerText = t;
+    document.getElementById('overlay').style.display = s ? 'flex' : 'none';
+  }
 
-  async function doBuchen(typ) {
-    const url = getUrl();
-    const art = document.getElementById('w-a').value;
-    const plz = document.getElementById('w-p').value;
-    const men = document.getElementById('w-m').value;
-    if(!art || !plz) return alert("Bitte Platz und Artikel scannen!");
+  async function send(typ) {
+    var art = document.getElementById('w-a').value;
+    var plz = document.getElementById('w-p').value;
+    if(!art || !plz) return alert("Fehlende Daten!");
 
-    setStatus(true, "Prüfe Artikel...");
-    let nName = "";
-    try {
-      const r = await fetch(`${url}?aktion=warensuche&artikelId=${encodeURIComponent(art)}`);
-      const d = await r.json();
-      if (!d.name) {
-        setStatus(false);
-        nName = prompt("Neuer Artikel! Bitte Bezeichnung eingeben:");
-        if (!nName) return;
-        setStatus(true, "Speichere Artikel...");
-      }
-    } catch(e) { setStatus(false); }
+    setStatus(true, "Prüfe Artikel...");
+    var nName = "";
+    try {
+      var r = await fetch(api + "?aktion=warensuche&artikelId=" + encodeURIComponent(art));
+      var d = await r.json();
+      if(!d.name) {
+        setStatus(false);
+        nName = prompt("Neuer Artikel! Name:");
+        if(!nName) return;
+        setStatus(true, "Speichere...");
+      }
+    } catch(e) {}
 
-    setStatus(true, "Buchung läuft...");
-    try {
-      await fetch(url, { method: "POST", body: JSON.stringify({aktion:"buchung", daten:{typ, artikel:art, menge:men, platz:plz, neuerName:nName}}) });
-      setStatus(false);
-      alert("✅ Erfasst!");
-      document.getElementById('w-a').value = "";
-    } catch(e) { setStatus(false); alert("✅ Gesendet."); }
-  }
+    setStatus(true, "Buchung läuft...");
+    try {
+      await fetch(api, {method:"POST", body:JSON.stringify({aktion:"buchung", daten:{typ:typ, artikel:art, menge:document.getElementById('w-m').value, platz:plz, neuerName:nName}})});
+      setStatus(false);
+      alert("Erfolgreich!");
+      document.getElementById('w-a').value = "";
+    } catch(e) { setStatus(false); alert("Gesendet."); }
+  }
 
-  async function doPlatz() {
-    setStatus(true, "Suche...");
-    try {
-      const r = await fetch(`${getUrl()}?aktion=pruefung&platzId=${encodeURIComponent(document.getElementById('p-p').value)}`);
-      const d = await r.json();
-      document.getElementById('res-p').innerHTML = d.res ? `<b>${d.res.name}</b><br><span style="color:var(--a); font-weight:bold;">Bestand: ${d.res.menge}</span>` : "Platz leer.";
-    } catch(e) { document.getElementById('res-p').innerText = "Fehler."; }
-    setStatus(false);
-  }
-
-  async function doSuche() {
-    setStatus(true, "Suche...");
-    try {
-      const r = await fetch(`${getUrl()}?aktion=warensuche&artikelId=${encodeURIComponent(document.getElementById('s-a').value)}`);
-      const d = await r.json();
-      if(d.res && d.res.length > 0) {
-        let h = `<b>${d.name}</b><table><tr><th>Platz</th><th>Menge</th></tr>`;
-        d.res.forEach(i => h += `<tr><td>📍 ${i.platz}</td><td>${i.menge}</td></tr>`);
-        document.getElementById('res-s').innerHTML = h + "</table>";
-      } else { document.getElementById('res-s').innerHTML = "Kein Bestand."; }
-    } catch(e) { document.getElementById('res-s').innerText = "Fehler."; }
-    setStatus(false);
-  }
-
-  function tab(t) {
-    document.querySelectorAll('.card').forEach(c => c.classList.remove('active'));
-    document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
-    document.getElementById(t).classList.add('active');
-    const bId = 'b-' + t;
-    document.getElementById(bId).classList.add('active');
-    if (scanner) { scanner.stop().then(() => start(t)).catch(() => start(t)); } else { start(t); }
-  }
-
-  function start(t) {
-    const elMap = { 'buchen':'r-buchen', 'platz':'r-platz', 'suche':'r-suche' };
-    if(!elMap[t]) return;
-    scanner = new Html5Qrcode(elMap[t]);
-    scanner.start({ facingMode: "environment" }, { fps: 15, qrbox: 250 }, (txt) => {
-      if(t === 'buchen') {
-        if(!document.getElementById('w-p').value) document.getElementById('w-p').value = txt;
-        else document.getElementById('w-a').value = txt;
-      } else if(t === 'platz') {
-        document.getElementById('p-p').value = txt; doPlatz();
-      } else if(t === 'suche') {
-        document.getElementById('s-a').value = txt; doSuche();
-      }
-      if (window.navigator.vibrate) window.navigator.vibrate(50);
-    }).catch(() => {});
-  }
-  window.onload = () => start('buchen');
+  scanner.start({facingMode:"environment"}, {fps:15, qrbox:250}, (txt) => {
+    if(!document.getElementById('w-p').value) document.getElementById('w-p').value = txt;
+    else document.getElementById('w-a').value = txt;
+    if(window.navigator.vibrate) window.navigator.vibrate(50);
+  }).catch(()=>{});
 </script>
 </body>
 </html>
