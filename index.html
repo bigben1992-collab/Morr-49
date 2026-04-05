@@ -6,65 +6,182 @@
   <title>Lager Pro | Super Supreme System</title>
   <script src="https://unpkg.com/html5-qrcode"></script>
   <style>
-    :root { --primary: #0f172a; --accent: #2563eb; --danger: #ef4444; --success: #22c55e; --bg: #f8fafc; }
-    body { font-family: -apple-system, system-ui, sans-serif; background: var(--bg); margin: 0; padding: 0; color: #334155; }
-    
-    header { background: white; padding: 10px; text-align: center; box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
-    .logo-box { max-width: 180px; margin: 0 auto; height: 60px; display: flex; align-items: center; justify-content: center; }
-    .logo-box img { max-width: 100%; max-height: 100%; object-fit: contain; }
+    :root { 
+      --primary: #0f172a; 
+      --accent: #2563eb; 
+      --danger: #ef4444; 
+      --success: #22c55e; 
+      --bg: #f8fafc; 
+    }
 
-    .container { max-width: 450px; margin: 0 auto; padding: 15px; }
+    * { box-sizing: border-box; }
+
+    body { 
+      font-family: -apple-system, system-ui, sans-serif; 
+      background: var(--bg); 
+      margin: 0; 
+      padding: 0; 
+      color: #334155; 
+      overflow-x: hidden;
+    }
     
-    /* Lade-Overlay (Sperrbildschirm) */
+    /* FIX: Header mit fester Höhe, damit nichts springt */
+    header { 
+      background: white; 
+      height: 80px; 
+      display: flex; 
+      align-items: center; 
+      justify-content: center; 
+      box-shadow: 0 2px 8px rgba(0,0,0,0.05); 
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+    
+    .logo-box { 
+      height: 60px; 
+      width: 180px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .logo-box img { 
+      max-width: 100%; 
+      max-height: 100%; 
+      object-fit: contain; 
+    }
+
+    .container { 
+      max-width: 450px; 
+      margin: 0 auto; 
+      padding: 15px; 
+    }
+    
+    /* Lade-Overlay: Absolut positioniert über allem */
     #loader-overlay {
       display: none;
       position: fixed;
-      top: 0; left: 0; width: 100%; height: 100%;
-      background: rgba(255, 255, 255, 0.8);
-      z-index: 9999;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(255, 255, 255, 0.9);
+      z-index: 2000;
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      backdrop-filter: blur(3px);
+      backdrop-filter: blur(4px);
     }
+
     .spinner {
-      width: 50px; height: 50px;
-      border: 5px solid #f3f3f3;
-      border-top: 5px solid var(--accent);
+      width: 40px; height: 40px;
+      border: 4px solid #f3f3f3;
+      border-top: 4px solid var(--accent);
       border-radius: 50%;
       animation: spin 1s linear infinite;
     }
     @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-    .loader-text { margin-top: 15px; font-weight: bold; color: var(--primary); }
 
-    .nav { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; margin-bottom: 15px; }
-    .nav-btn { background: white; border: 1px solid #e2e8f0; border-radius: 10px; padding: 12px 2px; font-size: 11px; font-weight: 700; color: #64748b; cursor: pointer; transition: 0.2s; }
-    .nav-btn.active { background: var(--accent); color: white; border-color: var(--accent); }
+    .loader-text { margin-top: 15px; font-weight: bold; color: var(--primary); font-size: 14px; }
 
-    .card { background: white; padding: 20px; border-radius: 16px; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.05); display: none; border: 1px solid #f1f5f9; }
+    /* Navigation */
+    .nav { 
+      display: grid; 
+      grid-template-columns: repeat(4, 1fr); 
+      gap: 6px; 
+      margin-bottom: 20px; 
+    }
+
+    .nav-btn { 
+      background: white; 
+      border: 1px solid #e2e8f0; 
+      border-radius: 10px; 
+      padding: 12px 2px; 
+      font-size: 10px; 
+      font-weight: 800; 
+      color: #64748b; 
+      cursor: pointer; 
+      text-transform: uppercase;
+    }
+
+    .nav-btn.active { 
+      background: var(--accent); 
+      color: white; 
+      border-color: var(--accent); 
+      box-shadow: 0 4px 6px rgba(37, 99, 235, 0.2);
+    }
+
+    /* Cards */
+    .card { 
+      background: white; 
+      padding: 20px; 
+      border-radius: 16px; 
+      box-shadow: 0 10px 15px -3px rgba(0,0,0,0.05); 
+      display: none; 
+      border: 1px solid #f1f5f9; 
+    }
+
     .card.active { display: block; }
     
-    input { width: 100%; padding: 14px; margin: 8px 0; border: 1px solid #e2e8f0; border-radius: 12px; box-sizing: border-box; font-size: 16px; background: #fcfcfd; }
+    h3 { margin: 0 0 15px 0; font-size: 1.1rem; color: var(--primary); border-bottom: 2px solid #f8fafc; padding-bottom: 10px; }
+    
+    input { 
+      width: 100%; 
+      padding: 14px; 
+      margin: 8px 0; 
+      border: 1px solid #e2e8f0; 
+      border-radius: 12px; 
+      font-size: 16px; 
+      background: #f8fafc; 
+    }
+
     .grid-btns { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 10px; }
-    .btn-action { padding: 16px; border: none; border-radius: 12px; color: white; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; font-size: 14px; }
+    
+    .btn-action { 
+      padding: 16px; 
+      border: none; 
+      border-radius: 12px; 
+      color: white; 
+      font-weight: bold; 
+      cursor: pointer; 
+      font-size: 14px; 
+    }
+
     .btn-in { background: var(--success); }
     .btn-out { background: var(--danger); }
     
-    .result-box { background: #f8fafc; padding: 15px; border-radius: 12px; margin-top: 15px; border-left: 5px solid var(--accent); }
-    #reader-waren, #reader-platz, #reader-suche { width: 100%; border-radius: 12px; overflow: hidden; margin-bottom: 10px; background: #000; border: 2px solid #eee; }
+    .result-box { 
+      background: #f8fafc; 
+      padding: 15px; 
+      border-radius: 12px; 
+      margin-top: 15px; 
+      border-left: 5px solid var(--accent); 
+      min-height: 50px;
+    }
+
+    #reader-waren, #reader-platz, #reader-suche { 
+      width: 100%; 
+      border-radius: 12px; 
+      overflow: hidden; 
+      margin-bottom: 10px; 
+      background: #000; 
+      aspect-ratio: 4/3;
+    }
+
     table { width: 100%; border-collapse: collapse; margin-top: 10px; }
     td { padding: 12px 5px; border-bottom: 1px solid #f1f5f9; font-size: 14px; }
+    th { text-align: left; color: #94a3b8; font-size: 11px; text-transform: uppercase; padding: 5px; }
   </style>
 </head>
 <body>
 
 <div id="loader-overlay">
   <div class="spinner"></div>
-  <div id="status-text" class="loader-text">Verbindung zum Lager...</div>
+  <div id="status-text" class="loader-text">Verarbeitung...</div>
 </div>
 
 <header>
-  <div class="logo-box"><img src="logo.png" alt="Logo"></div>
+  <div class="logo-box">
+    <img src="logo.png" alt="Super Supreme System">
+  </div>
 </header>
 
 <div class="container">
@@ -80,8 +197,8 @@
   <div id="warenbewegung" class="card active">
     <h3>📦 Buchen</h3>
     <div id="reader-waren"></div>
-    <input type="text" id="w-platz" placeholder="Lagerplatz">
-    <input type="text" id="w-artikel" placeholder="Artikel">
+    <input type="text" id="w-platz" placeholder="Platz scannen">
+    <input type="text" id="w-artikel" placeholder="Artikel scannen">
     <input type="number" id="w-menge" placeholder="Menge" value="1">
     <div class="grid-btns">
       <button class="btn-action btn-in" onclick="sendBuchung('Einlagerung')">📥 EIN</button>
@@ -93,7 +210,7 @@
     <h3>🔍 Platz-Abfrage</h3>
     <div id="reader-platz"></div>
     <input type="text" id="p-platz" placeholder="Platz scannen..." onchange="sendAbfrage()">
-    <div id="p-ergebnis" class="result-box">Warten...</div>
+    <div id="p-ergebnis" class="result-box">Warte auf Scan...</div>
   </div>
 
   <div id="warensuche" class="card">
@@ -113,7 +230,6 @@
   let html5QrCode;
   const getUrl = () => document.getElementById('backend-url').value;
 
-  // HILFSFUNKTIONEN FÜR STATUS
   function setStatus(visible, text = "Lade...") {
     const overlay = document.getElementById('loader-overlay');
     document.getElementById('status-text').innerText = text;
@@ -123,9 +239,10 @@
   async function sendBuchung(typ) {
     const id = document.getElementById('w-artikel').value;
     const platz = document.getElementById('w-platz').value;
+    const menge = document.getElementById('w-menge').value;
     if(!id || !platz) return alert("Daten unvollständig!");
 
-    setStatus(true, "Prüfe Artikel...");
+    setStatus(true, "Prüfe Artikeldaten...");
     
     let nName = "";
     try {
@@ -133,43 +250,42 @@
       const data = await res.json();
       
       if (!data.name) {
-        setStatus(false); // Cursor für Prompt freigeben
-        nName = prompt("Neuer Artikel! Name:");
+        setStatus(false);
+        nName = prompt("Neuer Artikel! Bitte Bezeichnung eingeben:");
         if (!nName) return;
-        setStatus(true, "Speichere neuen Artikel...");
+        setStatus(true, "Speichere Stammdaten...");
       }
     } catch(e) { setStatus(false); }
 
-    setStatus(true, "Buchung wird übertragen...");
+    setStatus(true, "Buchung wird verarbeitet...");
     
-    // Wir nutzen hier POST. Um auf die Antwort zu warten, entfernen wir "no-cors"
-    // Google braucht für eine echte Antwort oft einen speziellen fetch-Aufbau
     try {
+      // POST Request
       await fetch(getUrl(), { 
         method: "POST", 
-        body: JSON.stringify({aktion:"buchung", daten:{typ, artikel:id, menge:document.getElementById('w-menge').value, platz, neuerName:nName}}) 
+        body: JSON.stringify({aktion:"buchung", daten:{typ, artikel:id, menge, platz, neuerName:nName}}) 
       });
       setStatus(false);
-      alert("✅ Erfolgreich gebucht!");
+      alert("✅ Buchung erfolgreich!");
       document.getElementById('w-artikel').value = "";
     } catch(e) {
       setStatus(false);
-      alert("✅ Buchung gesendet (Google Bestätigung ausstehend)");
+      alert("✅ Gesendet."); // Google POST Antwort-Workaround
     }
   }
 
   async function sendAbfrage() {
-    setStatus(true, "Suche Platz-Details...");
+    setStatus(true, "Abfrage läuft...");
     try {
       const r = await fetch(`${getUrl()}?aktion=pruefung&platzId=${encodeURIComponent(document.getElementById('p-platz').value)}`);
       const d = await r.json();
-      document.getElementById('p-ergebnis').innerHTML = d.res ? `<b>${d.res.name}</b><br><span style="color:var(--accent);">Bestand: ${d.res.menge}</span>` : "Leer.";
-    } catch (e) {}
+      document.getElementById('p-ergebnis').innerHTML = d.res ? `<b>${d.res.name}</b><br><small>ID: ${d.res.artikel}</small><br><br><span style="color:var(--accent); font-weight:bold;">Bestand: ${d.res.menge}</span>` : "Platz leer.";
+    } catch (e) { document.getElementById('p-ergebnis').innerText = "Fehler bei der Abfrage."; }
     setStatus(false);
   }
 
   async function sendWarensuche() {
-    setStatus(true, "Suche Bestände...");
+    setStatus(true, "Suche läuft...");
     try {
       const r = await fetch(`${getUrl()}?aktion=warensuche&artikelId=${encodeURIComponent(document.getElementById('s-artikel').value)}`);
       const d = await r.json();
@@ -177,8 +293,8 @@
         let h = `<b>${d.name}</b><table><tr><th>Platz</th><th>Menge</th></tr>`;
         d.res.forEach(i => h += `<tr><td>📍 ${i.platz}</td><td>${i.menge}</td></tr>`);
         document.getElementById('s-ergebnis').innerHTML = h + "</table>";
-      } else { document.getElementById('s-ergebnis').innerHTML = "Nichts gefunden."; }
-    } catch (e) {}
+      } else { document.getElementById('s-ergebnis').innerHTML = "Kein Bestand gefunden."; }
+    } catch (e) { document.getElementById('s-ergebnis').innerText = "Suche fehlgeschlagen."; }
     setStatus(false);
   }
 
@@ -186,10 +302,13 @@
     document.querySelectorAll('.card').forEach(c => c.classList.remove('active'));
     document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
     document.getElementById(t).classList.add('active');
+    
     const bId = t==='warenbewegung'?'btn-waren':t==='platzpruefung'?'btn-platz':t==='warensuche'?'btn-suche':'btn-settings';
     document.getElementById(bId).classList.add('active');
-    if (html5QrCode) html5QrCode.stop().then(() => startScanner(t)).catch(() => startScanner(t));
-    else startScanner(t);
+
+    if (html5QrCode) {
+      html5QrCode.stop().then(() => startScanner(t)).catch(() => startScanner(t));
+    } else { startScanner(t); }
   }
 
   function startScanner(t) {
@@ -205,8 +324,10 @@
       } else if(t === 'warensuche') {
         document.getElementById('s-artikel').value = txt; sendWarensuche();
       }
+      if (window.navigator.vibrate) window.navigator.vibrate(50);
     }).catch(() => {});
   }
+  
   window.onload = () => startScanner('warenbewegung');
 </script>
 </body>
