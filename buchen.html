@@ -1,249 +1,256 @@
 <!DOCTYPE html>
 <html lang="de">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Buchen | Lager Pro</title>
-  <script src="https://unpkg.com/html5-qrcode"></script>
-  <style>
-    :root {
-      --primary: #1e293b;
-      --accent: #3b82f6;
-      --success: #10b981;
-      --danger: #ef4444;
-      --bg: #f8fafc;
-      --card-bg: #ffffff;
-      --text: #334155;
-      --text-light: #94a3b8;
-    }
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Buchen | Lager Pro</title>
+  <script src="https://unpkg.com/html5-qrcode"></script>
+  <style>
+    :root { 
+      --p: #1e293b; /* Dunkelblau */
+      --a: #3b82f6; /* Accent Blau */
+      --s: #10b981; /* Erfolg Grün */
+      --d: #ef4444; /* Fehler Rot */
+      --bg: #f8fafc; 
+      --card: #ffffff;
+    }
 
-    * { 
-      box-sizing: border-box; 
-      -webkit-tap-highlight-color: transparent;
-    }
+    * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+    
+    body { 
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; 
+      background: var(--bg); 
+      margin: 0; 
+      color: var(--p);
+    }
 
-    body { 
-      font-family: 'Inter', -apple-system, sans-serif; 
-      background: var(--bg); 
-      color: var(--text);
-      margin: 0; 
-      line-height: 1.5;
-    }
+    header { 
+      background: white; 
+      height: 65px; 
+      display: flex; 
+      align-items: center; 
+      justify-content: center; 
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+      border-bottom: 2px solid #e2e8f0;
+    }
 
-    header { 
-      background: var(--card-bg); 
-      height: 70px; 
-      display: flex; 
-      align-items: center; 
-      justify-content: center; 
-      box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);
-      position: sticky;
-      top: 0;
-      z-index: 50;
-    }
+    .container { max-width: 450px; margin: 0 auto; padding: 20px; }
 
-    .container { 
-      max-width: 480px; 
-      margin: 0 auto; 
-      padding: 20px; 
-    }
+    .card { 
+      background: var(--card); 
+      padding: 25px; 
+      border-radius: 24px; 
+      box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1);
+    }
 
-    .card { 
-      background: var(--card-bg); 
-      padding: 24px; 
-      border-radius: 24px; 
-      box-shadow: 0 10px 25px -5px rgba(0,0,0,0.05), 0 8px 10px -6px rgba(0,0,0,0.05); 
-    }
+    h3 { 
+      margin-top: 0; 
+      font-size: 1.2rem; 
+      display: flex; 
+      align-items: center; 
+      gap: 8px; 
+    }
 
-    h3 {
-      margin: 0 0 20px 0;
-      font-size: 1.25rem;
-      font-weight: 700;
-      color: var(--primary);
-      display: flex;
-      align-items: center;
-      gap: 10px;
-    }
+    #reader { 
+      width: 100%; 
+      border-radius: 16px; 
+      overflow: hidden; 
+      background: #000; 
+      margin-bottom: 20px;
+      border: 1px solid #e2e8f0;
+    }
 
-    #reader { 
-      width: 100%; 
-      border-radius: 18px; 
-      overflow: hidden; 
-      background: #000; 
-      margin-bottom: 20px;
-      border: 4px solid var(--bg);
-    }
+    .input-field { margin-bottom: 15px; }
 
-    .input-group {
-      margin-bottom: 16px;
-    }
+    label { 
+      display: block; 
+      font-size: 11px; 
+      font-weight: 700; 
+      color: #64748b; 
+      margin-bottom: 5px; 
+      margin-left: 5px;
+      text-transform: uppercase;
+    }
 
-    .input-group label {
-      display: block;
-      font-size: 0.75rem;
-      font-weight: 700;
-      text-transform: uppercase;
-      letter-spacing: 0.05em;
-      color: var(--text-light);
-      margin-bottom: 6px;
-      margin-left: 4px;
-    }
+    input { 
+      width: 100%; 
+      padding: 14px; 
+      border: 1.5px solid #e2e8f0; 
+      border-radius: 12px; 
+      font-size: 16px; 
+      outline: none; 
+      transition: all 0.2s;
+      background: #fdfdfd;
+    }
 
-    input { 
-      width: 100%; 
-      padding: 14px 16px; 
-      border: 2px solid #f1f5f9; 
-      border-radius: 14px; 
-      font-size: 16px; 
-      color: var(--primary);
-      background: #f8fafc;
-      transition: all 0.2s ease;
-      outline: none;
-    }
+    input:focus { border-color: var(--a); background: white; box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1); }
 
-    input:focus { 
-      border-color: var(--accent); 
-      background: #fff;
-      box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.1);
-    }
+    .btn-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 20px; }
 
-    .btn-row { 
-      display: grid; 
-      grid-template-columns: 1fr 1fr; 
-      gap: 12px; 
-      margin-top: 24px; 
-    }
+    .btn { 
+      padding: 18px 10px; 
+      border: none; 
+      border-radius: 14px; 
+      color: white; 
+      font-weight: 700; 
+      cursor: pointer; 
+      font-size: 0.9rem; 
+      transition: transform 0.1s, opacity 0.2s;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+    }
 
-    .btn { 
-      padding: 16px; 
-      border: none; 
-      border-radius: 14px; 
-      color: white; 
-      font-weight: 700; 
-      cursor: pointer; 
-      font-size: 0.95rem; 
-      transition: all 0.2s;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 4px;
-    }
+    .btn:active { transform: scale(0.96); opacity: 0.9; }
+    
+    .btn small { font-weight: 400; font-size: 0.7rem; opacity: 0.8; }
 
-    .btn span { font-size: 0.7rem; opacity: 0.8; font-weight: 400; }
+    #ov { 
+      display: none; 
+      position: fixed; 
+      inset: 0; 
+      background: rgba(15, 23, 42, 0.9); 
+      z-index: 100; 
+      color: white; 
+      flex-direction: column; 
+      align-items: center; 
+      justify-content: center; 
+      backdrop-filter: blur(5px); 
+    }
 
-    .btn-in { background: var(--success); box-shadow: 0 4px 12px rgba(16, 185, 129, 0.2); }
-    .btn-out { background: var(--danger); box-shadow: 0 4px 12px rgba(239, 68, 68, 0.2); }
+    .spinner {
+      width: 40px;
+      height: 40px;
+      border: 4px solid rgba(255,255,255,0.3);
+      border-top: 4px solid white;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+      margin-bottom: 15px;
+    }
 
-    .btn:active { transform: scale(0.96); opacity: 0.9; }
+    @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
 
-    #ov { 
-      display: none; 
-      position: fixed; 
-      inset: 0; 
-      background: rgba(15, 23, 42, 0.9); 
-      z-index: 100; 
-      color: white; 
-      flex-direction: column; 
-      align-items: center; 
-      justify-content: center; 
-      backdrop-filter: blur(8px); 
-    }
-
-    .loader {
-      width: 48px;
-      height: 48px;
-      border: 5px solid #fff;
-      border-bottom-color: transparent;
-      border-radius: 50%;
-      display: inline-block;
-      animation: rotation 1s linear infinite;
-      margin-bottom: 15px;
-    }
-
-    @keyframes rotation { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-
-    .back { 
-      display: inline-flex; 
-      align-items: center;
-      justify-content: center;
-      width: 100%;
-      margin-top: 25px; 
-      text-decoration: none; 
-      color: var(--text-light); 
-      font-weight: 500;
-      font-size: 0.9rem;
-    }
-
-    /* Verstecke hässliche Datei-Upload-Texte vom QR Scanner */
-    #reader__dashboard_section_csr button {
-        background: var(--accent) !important;
-        border-radius: 8px !important;
-        color: white !important;
-        border: none !important;
-        padding: 8px 12px !important;
-    }
-  </style>
+    .back { 
+      display: block; 
+      text-align: center; 
+      margin-top: 30px; 
+      text-decoration: none; 
+      color: #64748b; 
+      font-weight: 500;
+      font-size: 0.9rem;
+    }
+  </style>
 </head>
 <body>
 
-  <div id="ov">
-    <span class="loader"></span>
-    <h2 id="ovLabel" style="margin:0;">Übermittle Daten</h2>
-    <p style="opacity:0.7;">Bitte einen Moment Geduld...</p>
-  </div>
+  <div id="ov">
+    <div class="spinner"></div>
+    <h2 id="ovLabel" style="margin:0;">Daten werden verarbeitet</h2>
+    <p style="opacity:0.7;">Bitte warten...</p>
+  </div>
 
-  <header>
-    <div style="font-weight: 800; font-size: 1.2rem; color: var(--primary);">
-      LAGER<span style="color:var(--accent)">PRO</span>
-    </div>
-  </header>
+  <header>
+    <div style="font-weight: 800; font-size: 1.3rem; letter-spacing: -0.5px;">
+      LAGER<span style="color:var(--a)">PRO</span>
+    </div>
+  </header>
 
-  <div class="container">
-    <div class="card">
-      <h3>
-        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m7.5 4.27 9 5.15"/><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/><path d="m3.3 7 8.7 5 8.7-5"/><path d="M12 22V12"/></svg>
-        Warenbewegung
-      </h3>
-      
-      <div id="reader"></div>
-      
-      <div class="input-group">
-        <label>Lagerplatz / Regal</label>
-        <input type="text" id="p" placeholder="Scan oder Eingabe..." autocomplete="off">
-      </div>
-      
-      <div class="input-group">
-        <label>Artikel / EAN</label>
-        <input type="text" id="a" placeholder="Scan oder Eingabe..." autocomplete="off">
-      </div>
-      
-      <div class="input-group">
-        <label>Anzahl / Menge</label>
-        <input type="number" id="m" value="1" min="1">
-      </div>
+  <div class="container">
+    <div class="card">
+      <h3>📦 Warenbewegung</h3>
+      
+      <div id="reader"></div>
+      
+      <div class="input-field">
+        <label>Platz / Regal</label>
+        <input type="text" id="p" placeholder="Scan Lagerplatz...">
+      </div>
+      
+      <div class="input-field">
+        <label>Artikel / EAN</label>
+        <input type="text" id="a" placeholder="Scan Artikel...">
+      </div>
+      
+      <div class="input-field">
+        <label>Menge</label>
+        <input type="number" id="m" value="1" min="1">
+      </div>
 
-      <div class="btn-row">
-        <button class="btn btn-in" onclick="run('Einlagerung')">
-          EINLAGERN
-          <span>+ Bestand</span>
-        </button>
-        <button class="btn btn-out" onclick="run('Entnahme')">
-          ENTNEHMEN
-          <span>- Bestand</span>
-        </button>
-      </div>
-    </div>
-    
-    <a href="index.html" class="back">
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right:8px;"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
-      Zurück zum Hauptmenü
-    </a>
-  </div>
+      <div class="btn-row">
+        <button class="btn" style="background:var(--s)" onclick="run('Einlagerung')">
+          EINLAGERN
+          <small>Bestand erhöhen</small>
+        </button>
+        <button class="btn" style="background:var(--d)" onclick="run('Entnahme')">
+          ENTNEHMEN
+          <small>Bestand senken</small>
+        </button>
+      </div>
+    </div>
+    <a href="index.html" class="back">← Zurück zum Hauptmenü</a>
+  </div>
 
-  <script>
-    // DEINE FUNKTIONALE LOGIK (UNVERÄNDERT)
-    const api = "https://script.google.com/macros/s/AKfycbzibU0CKU1mBRcvhaqY_ObcJUmRTcbBEWYJFvw5ft-GMFpn6Xpc57FXTvJvIqpEdiFnpg/exec"; 
+  <script>
+    // DEINE URL HIER EINTRAGEN
+    const api = "https://script.google.com/macros/s/AKfycbzibU0CKU1mBRcvhaqY_ObcJUmRTcbBEWYJFvw5ft-GMFpn6Xpc57FXTvJvIqpEdiFnpg/exec"; 
 
-    async function run(typ) {
-      const art = document.getElementById('a').value.trim();
-      const plz = document.getElementById('p').value.trim();
+    async function run(typ) {
+      const art = document.getElementById('a').value.trim();
+      const plz = document.getElementById('p').value.trim();
+      const menge = document.getElementById('m').value;
+      
+      if(!art || !plz || !menge) return alert("Fehlende Daten! Bitte scannen Sie Platz und Artikel.");
+      
+      document.getElementById('ov').style.display = 'flex';
+      
+      try {
+        // 1. Artikel prüfen
+        let checkRes = await fetch(`${api}?aktion=warensuche&artikelId=${encodeURIComponent(art)}`);
+        let checkData = await checkRes.json();
+        
+        let neuerName = "";
+        if (!checkData.name) {
+          document.getElementById('ov').style.display = 'none';
+          neuerName = prompt("Neuer Artikel erkannt! Bitte Bezeichnung eingeben:");
+          if (!neuerName) return; 
+          document.getElementById('ov').style.display = 'flex';
+        }
+
+        // 2. Buchung senden
+        const response = await fetch(api, {
+          method: "POST",
+          body: JSON.stringify({
+            daten: { typ: typ, artikel: art, menge: menge, platz: plz, neuerName: neuerName }
+          })
+        });
+        
+        const result = await response.json();
+        
+        if(result.status === "success") {
+          alert(`Erfolg: ${typ} von ${result.name || art}`);
+          document.getElementById('a').value = ""; // Fokus auf nächsten Artikel
+        } else {
+          alert("Server-Fehler: " + result.msg);
+        }
+      } catch (e) {
+        alert("Netzwerkfehler! Verbindung prüfen.");
+      } finally {
+        document.getElementById('ov').style.display = 'none';
+      }
+    }
+
+    // QR Scanner Initialisierung
+    let sc = new Html5Qrcode("reader");
+    sc.start({facingMode:"environment"}, {fps:15, qrbox:250}, (txt) => {
+      if(!document.getElementById('p').value) {
+        document.getElementById('p').value = txt;
+        if(window.navigator.vibrate) window.navigator.vibrate([50, 30, 50]);
+      } else if(document.getElementById('p').value !== txt) {
+        document.getElementById('a').value = txt;
+        if(window.navigator.vibrate) window.navigator.vibrate(50);
+      }
+    }).catch(err => console.error(err));
+  </script>
+</body>
+</html>
