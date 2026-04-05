@@ -2,96 +2,112 @@
 <html lang="de">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Buchen</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Buchen | Lager Pro</title>
   <script src="https://unpkg.com/html5-qrcode"></script>
   <style>
     :root { --p: #0f172a; --a: #2563eb; --s: #22c55e; --d: #ef4444; --bg: #f1f5f9; }
+    * { box-sizing: border-box; }
     body { font-family: sans-serif; background: var(--bg); margin: 0; }
-    header { background: white; height: 60px; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
+    header { background: white; height: 60px; display: flex; align-items: center; justify-content: center; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
     .container { max-width: 450px; margin: 0 auto; padding: 15px; }
     .card { background: white; padding: 20px; border-radius: 20px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); }
-    #reader { width: 100%; border-radius: 15px; overflow: hidden; aspect-ratio: 1; background: #000; margin-bottom: 15px; }
-    input { width: 100%; padding: 12px; margin: 5px 0 15px 0; border: 1.5px solid #e2e8f0; border-radius: 10px; font-size: 16px; box-sizing: border-box; }
-    .btn-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-    .btn { padding: 16px; border: none; border-radius: 12px; color: white; font-weight: bold; cursor: pointer; }
-    .back { display: block; text-align: center; margin-top: 20px; text-decoration: none; color: var(--a); font-weight: bold; }
-    #ov { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 100; color:white; flex-direction: column; align-items: center; justify-content: center; }
+    #reader { width: 100%; border-radius: 15px; overflow: hidden; background: #000; margin-bottom: 15px; }
+    input { width: 100%; padding: 14px; margin: 8px 0; border: 1.5px solid #e2e8f0; border-radius: 12px; font-size: 16px; outline: none; }
+    input:focus { border-color: var(--a); }
+    .btn-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px; }
+    .btn { padding: 18px; border: none; border-radius: 12px; color: white; font-weight: bold; cursor: pointer; font-size: 1rem; }
+    .btn:active { opacity: 0.8; transform: scale(0.98); }
+    #ov { display: none; position: fixed; inset: 0; background: rgba(15, 23, 42, 0.85); z-index: 100; color: white; flex-direction: column; align-items: center; justify-content: center; backdrop-filter: blur(4px); text-align: center; }
+    .back { display: block; text-align: center; margin-top: 25px; text-decoration: none; color: var(--a); font-weight: bold; }
   </style>
 </head>
 <body>
-  <div id="ov"><h2 id="ovText">Verarbeite...</h2></div>
+
+  <div id="ov"><h2 id="ovLabel">Übermittle Daten...</h2><p>Bitte warten</p></div>
+
   <header><img src="logo.png" style="height:35px;"></header>
+
   <div class="container">
     <div class="card">
-      <h3>📦 Buchen</h3>
+      <h3 style="margin:0 0 15px 0;">📦 Warenbewegung</h3>
       <div id="reader"></div>
-      <input type="text" id="p" placeholder="Platz scannen">
-      <input type="text" id="a" placeholder="Artikel scannen">
-      <input type="number" id="m" value="1">
+      
+      <label style="font-size:11px; font-weight:bold; color:#94a3b8; margin-left:5px;">PLATZ / REGAL</label>
+      <input type="text" id="p" placeholder="Platz scannen...">
+      
+      <label style="font-size:11px; font-weight:bold; color:#94a3b8; margin-left:5px;">ARTIKEL / EAN</label>
+      <input type="text" id="a" placeholder="Artikel scannen...">
+      
+      <label style="font-size:11px; font-weight:bold; color:#94a3b8; margin-left:5px;">MENGE</label>
+      <input type="number" id="m" value="1" min="1">
+
       <div class="btn-row">
-        <button class="btn" style="background:var(--s)" onclick="run('Einlagerung')">EIN</button>
-        <button class="btn" style="background:var(--d)" onclick="run('Entnahme')">AUS</button>
+        <button class="btn" style="background:var(--s)" onclick="run('Einlagerung')">EINLAGERN</button>
+        <button class="btn" style="background:var(--d)" onclick="run('Entnahme')">ENTNEHMEN</button>
       </div>
     </div>
     <a href="index.html" class="back">← Hauptmenü</a>
   </div>
 
   <script>
-    const api = "https://script.google.com/macros/s/AKfycbw00lwpfUmaVNLP5D-ldJ9Kt2tr47-PePzhmCQpyzx7e3Csbdk8MC4SiLmZnCKohgHfCA/exec";
-    let sc = new Html5Qrcode("reader");
+    const api = "DEINE_WEB_APP_URL"; // DEINE URL HIER
 
-    async function run(t) {
-      const art = document.getElementById('a').value;
-      const plz = document.getElementById('p').value;
+    async function run(typ) {
+      const art = document.getElementById('a').value.trim();
+      const plz = document.getElementById('p').value.trim();
       const menge = document.getElementById('m').value;
       
-      if(!art || !plz || !menge) return alert("Daten unvollständig!");
+      if(!art || !plz || !menge) return alert("Fehlende Scans oder Menge!");
       
       document.getElementById('ov').style.display = 'flex';
       
       try {
-        // 1. Artikel checken
-        let check = await fetch(`${api}?aktion=warensuche&artikelId=${art}`);
-        let checkData = await check.json();
+        // 1. Prüfen, ob der Artikel bereits bekannt ist
+        let checkRes = await fetch(`${api}?aktion=warensuche&artikelId=${encodeURIComponent(art)}`);
+        let checkData = await checkRes.json();
         
-        let nN = "";
+        let neuerName = "";
         if (!checkData.name) {
           document.getElementById('ov').style.display = 'none';
-          nN = prompt("Neuer Artikel! Bitte Name eingeben:");
-          if (!nN) return;
+          neuerName = prompt("Neuer Artikel erkannt! Bitte Bezeichnung eingeben:");
+          if (!neuerName) return; // Abbruch wenn kein Name eingegeben wurde
           document.getElementById('ov').style.display = 'flex';
         }
 
-        // 2. Buchung senden (POST-Ersatz via Fetch)
+        // 2. Buchung senden
         const response = await fetch(api, {
           method: "POST",
           body: JSON.stringify({
-            daten: { typ: t, artikel: art, menge: menge, platz: plz, neuerName: nN }
+            daten: { typ: typ, artikel: art, menge: menge, platz: plz, neuerName: neuerName }
           })
         });
         
         const result = await response.json();
         
         if(result.status === "success") {
-          alert("Erfolgreich gebucht: " + (result.name || art));
-          document.getElementById('a').value = "";
-          document.getElementById('m').value = "1";
+          alert(`Erfolgreich: ${typ} von ${result.name || art}`);
+          document.getElementById('a').value = ""; // Nur Artikel leeren für nächste Scan-Runde
         } else {
-          alert("Fehler: " + result.msg);
+          alert("Fehler vom Server: " + result.msg);
         }
       } catch (e) {
-        alert("Netzwerkfehler oder ungültige URL!");
+        alert("Netzwerkfehler! Prüfen Sie Ihre Internetverbindung.");
       } finally {
         document.getElementById('ov').style.display = 'none';
       }
     }
 
+    let sc = new Html5Qrcode("reader");
     sc.start({facingMode:"environment"}, {fps:15, qrbox:250}, (txt) => {
-      if(!document.getElementById('p').value) document.getElementById('p').value = txt;
-      else document.getElementById('a').value = txt;
+      // Logik: Zuerst Platz scannen, dann Artikel
+      if(!document.getElementById('p').value) {
+        document.getElementById('p').value = txt;
+      } else {
+        document.getElementById('a').value = txt;
+      }
       if(window.navigator.vibrate) window.navigator.vibrate(50);
-    }).catch(err => console.log(err));
+    }).catch(err => console.error(err));
   </script>
 </body>
 </html>
