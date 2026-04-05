@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Platz-Info | Lager Pro</title>
+  <script src="https://unpkg.com/html5-qrcode"></script>
+  <style>
+    :root { --p: #0f172a; --a: #2563eb; --bg: #f8fafc; }
+    body { font-family: sans-serif; background: var(--bg); margin: 0; padding: 0; }
+    header { background: white; height: 70px; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
+    .logo { height: 45px; }
+    .nav { display: grid; grid-template-columns: repeat(4, 1fr); gap: 5px; padding: 15px; max-width: 450px; margin: 0 auto; }
+    .nav a { text-decoration: none; background: white; border: 1px solid #e2e8f0; border-radius: 10px; padding: 12px 2px; font-size: 10px; font-weight: 800; color: #64748b; text-align: center; text-transform: uppercase; }
+    .nav a.active { background: var(--a); color: white; border-color: var(--a); }
+    .container { max-width: 450px; margin: 0 auto; padding: 0 15px; }
+    .card { background: white; padding: 20px; border-radius: 20px; box-shadow: 0 4px 6px rgba(0,0,0,0.02); }
+    input { width: 100%; padding: 14px; margin: 8px 0; border: 1px solid #e2e8f0; border-radius: 12px; font-size: 16px; outline: none; background: #fcfcfd; }
+    #reader { width: 100%; border-radius: 15px; overflow: hidden; aspect-ratio: 1; background: #000; margin-bottom: 10px; }
+    .res-box { background: #f1f5f9; padding: 15px; border-radius: 12px; margin-top: 15px; border-left: 5px solid var(--a); min-height: 60px; }
+    #overlay { display: none; position: fixed; inset: 0; background: rgba(255,255,255,0.8); z-index: 2000; flex-direction: column; align-items: center; justify-content: center; }
+  </style>
+</head>
+<body>
+<div id="overlay"><p>Suche...</p></div>
+<header><img src="logo.png" class="logo"></header>
+<div class="nav">
+  <a href="index.html">Buchen</a>
+  <a href="platz.html" class="active">Platz</a>
+  <a href="suche.html">Suche</a>
+  <a href="setup.html">Setup</a>
+</div>
+<div class="container">
+  <div class="card">
+    <h3>🔍 Platz-Info</h3>
+    <div id="reader"></div>
+    <input type="text" id="p-input" placeholder="Platz scannen..." onchange="check()">
+    <div id="result" class="res-box">Scanne einen Platz...</div>
+  </div>
+</div>
+<script>
+  var api = "DEINE_GOOGLE_URL";
+  var scanner = new Html5Qrcode("reader");
+  async function check() {
+    var p = document.getElementById('p-input').value;
+    if(!p) return;
+    document.getElementById('overlay').style.display = 'flex';
+    try {
+      var r = await fetch(api + "?aktion=pruefung&platzId=" + encodeURIComponent(p));
+      var d = await r.json();
+      document.getElementById('result').innerHTML = d.res ? `<b>${d.res.name}</b><br>ID: ${d.res.artikel}<br><span style="color:var(--a); font-size:20px; font-weight:bold;">Bestand: ${d.res.menge}</span>` : "Platz ist leer.";
+    } catch(e) { document.getElementById('result').innerText = "Fehler!"; }
+    document.getElementById('overlay').style.display = 'none';
+  }
+  scanner.start({facingMode:"environment"}, {fps:15, qrbox:250}, (txt) => {
+    document.getElementById('p-input').value = txt; check();
+    if(window.navigator.vibrate) window.navigator.vibrate(50);
+  }).catch(()=>{});
+</script>
+</body>
+</html>
