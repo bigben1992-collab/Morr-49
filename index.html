@@ -1,176 +1,271 @@
 <!DOCTYPE html>
 <html lang="de">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Lager-Pro</title>
-  <script src="https://unpkg.com/html5-qrcode"></script>
-  <style>
-    :root { 
-      --primary: #2563eb; 
-      --danger: #ef4444; 
-      --success: #22c55e; 
-      --bg-color: #f8fafc;
-      /* logo.png*/
-      --banner-img: url('logo.png'); 
-    }
-    body { font-family: sans-serif; background: var(--bg-color); padding: 0; margin: 0; }
-    .container { max-width: 500px; margin: auto; padding: 10px; }
-    
-    /* STYLING FÜR DEN BANNER */
-    .banner {
-      width: 100%;
-      height: 150px; /* Höhe des Banners anpassen */
-      background-image: var(--banner-img);
-      background-size: contain; /* Zeigt das ganze Logo an, ohne es abzuschneiden */
-      background-repeat: no-repeat;
-      background-position: center; /* Zentriert das Logo */
-      background-color: white; /* Hintergrundfarbe des Banners, falls das Bild kleiner ist */
-      margin-bottom: 20px;
-      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-    }
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Lager-Pro | Super Supreme System</title>
+  <script src="https://unpkg.com/html5-qrcode"></script>
+  <style>
+    :root { 
+      --primary: #1e293b; 
+      --accent: #2563eb;
+      --danger: #ef4444; 
+      --success: #22c55e; 
+      --bg-color: #f1f5f9;
+    }
+    
+    body { 
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; 
+      background: var(--bg-color); 
+      padding: 0; 
+      margin: 0; 
+    }
 
-    .nav { display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 5px; margin-bottom: 20px; }
-    button.nav-btn { padding: 10px 5px; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; font-size: 0.75rem; background: #e2e8f0; color: #1e293b; }
-    button.nav-btn.active { background: var(--primary); color: white; }
-    
-    .card { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); display: none; }
-    .card.active { display: block; }
-    
-    input { width: 100%; padding: 12px; margin: 8px 0; border: 1px solid #cbd5e1; border-radius: 8px; box-sizing: border-box; }
-    .grid-btns { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-    .btn-action { padding: 15px; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; color: white; margin-top: 10px; }
-    .btn-in { background: var(--success); }
-    .btn-out { background: var(--danger); }
-    
-    .result-box { background: #f1f5f9; padding: 15px; border-radius: 8px; margin-top: 10px; border-left: 5px solid var(--primary); }
-    #reader-waren, #reader-platz, #reader-suche { width: 100%; border-radius: 8px; overflow: hidden; margin-bottom: 10px; background: #000; }
-    table { width: 100%; border-collapse: collapse; margin-top: 10px; }
-    th, td { text-align: left; padding: 8px; border-bottom: 1px solid #ddd; }
-  </style>
+    /* HEADER & LOGO AREA */
+    header {
+      background: white;
+      padding: 20px 10px;
+      text-align: center;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+      margin-bottom: 15px;
+    }
+
+    .logo-container {
+      max-width: 250px;
+      margin: 0 auto;
+    }
+
+    .logo-container img {
+      width: 100%;
+      height: auto;
+      display: block;
+      /* Falls das Bild nicht lädt, wird dieser Text gezeigt */
+      font-size: 12px;
+      color: #94a3b8;
+    }
+
+    .container { max-width: 500px; margin: auto; padding: 0 15px 30px 15px; }
+    
+    /* NAVIGATION */
+    .nav { 
+      display: grid; 
+      grid-template-columns: repeat(4, 1fr); 
+      gap: 6px; 
+      margin-bottom: 20px; 
+    }
+    
+    .nav-btn { 
+      padding: 12px 2px; 
+      border: none; 
+      border-radius: 8px; 
+      cursor: pointer; 
+      font-weight: 600; 
+      font-size: 0.7rem; 
+      background: white; 
+      color: #64748b;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+      transition: all 0.2s;
+    }
+    
+    .nav-btn.active { 
+      background: var(--accent); 
+      color: white; 
+    }
+    
+    /* CARDS */
+    .card { 
+      background: white; 
+      padding: 20px; 
+      border-radius: 16px; 
+      box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1); 
+      display: none; 
+    }
+    
+    .card.active { display: block; }
+    
+    h3 { margin-top: 0; color: var(--primary); font-size: 1.2rem; }
+
+    input { 
+      width: 100%; 
+      padding: 14px; 
+      margin: 8px 0; 
+      border: 1px solid #e2e8f0; 
+      border-radius: 10px; 
+      box-sizing: border-box; 
+      background: #f8fafc;
+      font-size: 1rem;
+    }
+
+    .grid-btns { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 10px; }
+    
+    .btn-action { 
+      padding: 16px; 
+      border: none; 
+      border-radius: 10px; 
+      cursor: pointer; 
+      font-weight: bold; 
+      color: white; 
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+    
+    .btn-in { background: var(--success); }
+    .btn-out { background: var(--danger); }
+    
+    .result-box { 
+      background: #f8fafc; 
+      padding: 15px; 
+      border-radius: 10px; 
+      margin-top: 15px; 
+      border-left: 4px solid var(--accent);
+      min-height: 40px;
+    }
+
+    #reader-waren, #reader-platz, #reader-suche { 
+      width: 100%; 
+      border-radius: 12px; 
+      overflow: hidden; 
+      margin-bottom: 15px; 
+      background: #000;
+      border: 2px solid #e2e8f0;
+    }
+
+    table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+    th { text-align: left; font-size: 0.8rem; color: #64748b; text-transform: uppercase; padding: 8px 4px; }
+    td { padding: 12px 4px; border-top: 1px solid #f1f5f9; font-weight: 500; }
+  </style>
 </head>
 <body>
 
-<div class="banner"></div>
+<header>
+  <div class="logo-container">
+    <img src="logo.png" alt="SUPER SUPREME SYSTEM Logo">
+  </div>
+</header>
 
 <div class="container">
-  <input type="hidden" id="backend-url" value="https://script.google.com/macros/s/AKfycbyA_JyleW5Lg1ytaecWnenZ0pTN5Tr2g0e-TLDU8ONpVpG3NDKGFjUAD3LEkJ3fHQC6/exec">
+  <input type="hidden" id="backend-url" value="https://script.google.com/macros/s/AKfycbxXYg5TzSv3164nE6CKxVdEOJ8_OwFzEeEdDlAgQ3FUQaazGjO2Jkq7sqykjUVvLwaf_A/exec">
 
-  <div class="nav">
-    <button id="btn-waren" class="nav-btn active" onclick="switchTab('warenbewegung')">BUCHEN</button>
-    <button id="btn-platz" class="nav-btn" onclick="switchTab('platzpruefung')">PLATZ</button>
-    <button id="btn-suche" class="nav-btn" onclick="switchTab('warensuche')">SUCHE</button>
-    <button id="btn-settings" class="nav-btn" onclick="switchTab('einstellungen')">SETUP</button>
-  </div>
+  <div class="nav">
+    <button id="btn-waren" class="nav-btn active" onclick="switchTab('warenbewegung')">BUCHEN</button>
+    <button id="btn-platz" class="nav-btn" onclick="switchTab('platzpruefung')">PLATZ</button>
+    <button id="btn-suche" class="nav-btn" onclick="switchTab('warensuche')">SUCHE</button>
+    <button id="btn-settings" class="nav-btn" onclick="switchTab('einstellungen')">SETUP</button>
+  </div>
 
-  <div id="warenbewegung" class="card active">
-    <h3>📦 Bewegung</h3>
-    <div id="reader-waren"></div>
-    <input type="text" id="w-platz" placeholder="Platz scannen">
-    <input type="text" id="w-artikel" placeholder="Artikel scannen">
-    <input type="number" id="w-menge" placeholder="Menge" value="1">
-    <div class="grid-btns">
-      <button class="btn-action btn-in" onclick="sendBuchung('Einlagerung')">📥 EIN</button>
-      <button class="btn-action btn-out" onclick="sendBuchung('Entnahme')">📤 AUS</button>
-    </div>
-  </div>
+  <div id="warenbewegung" class="card active">
+    <h3>📦 Warenbewegung</h3>
+    <div id="reader-waren"></div>
+    <input type="text" id="w-platz" placeholder="Lagerplatz">
+    <input type="text" id="w-artikel" placeholder="Artikel">
+    <input type="number" id="w-menge" placeholder="Menge" value="1">
+    <div class="grid-btns">
+      <button class="btn-action btn-in" onclick="sendBuchung('Einlagerung')">📥 EIN</button>
+      <button class="btn-action btn-out" onclick="sendBuchung('Entnahme')">📤 AUS</button>
+    </div>
+  </div>
 
-  <div id="platzpruefung" class="card">
-    <h3>🔍 Platz-Info</h3>
-    <div id="reader-platz"></div>
-    <input type="text" id="p-platz" placeholder="Platz scannen..." onchange="sendAbfrage()">
-    <div id="p-ergebnis" class="result-box">Warte auf Scan...</div>
-  </div>
+  <div id="platzpruefung" class="card">
+    <h3>🔍 Platz-Info</h3>
+    <div id="reader-platz"></div>
+    <input type="text" id="p-platz" placeholder="Platz scannen..." onchange="sendAbfrage()">
+    <div id="p-ergebnis" class="result-box">Scanne einen Platz für Details...</div>
+  </div>
 
-  <div id="warensuche" class="card">
-    <h3>🔎 Artikel finden</h3>
-    <div id="reader-suche"></div>
-    <input type="text" id="s-artikel" placeholder="Artikel scannen..." onchange="sendWarensuche()">
-    <div id="s-ergebnis" class="result-box">Ergebnisse erscheinen hier...</div>
-  </div>
+  <div id="warensuche" class="card">
+    <h3>🔎 Bestands-Suche</h3>
+    <div id="reader-suche"></div>
+    <input type="text" id="s-artikel" placeholder="Artikel scannen..." onchange="sendWarensuche()">
+    <div id="s-ergebnis" class="result-box">Gefundene Lagerplätze erscheinen hier.</div>
+  </div>
 
-  <div id="einstellungen" class="card">
-    <h3>⚙️ Setup</h3>
-    <button onclick="location.reload()" style="width:100%; background:#64748b; color:white; padding:15px; border-radius:8px; border:none; cursor:pointer;">🔄 App Refresh</button>
-  </div>
+  <div id="einstellungen" class="card">
+    <h3>⚙️ Systemeinstellungen</h3>
+    <p style="color: #64748b; font-size: 0.9rem;">Status: Verbunden mit Cloud-Datenbank</p>
+    <button onclick="location.reload()" style="width:100%; background:var(--primary); color:white; padding:15px; border-radius:10px; border:none; cursor:pointer; font-weight:bold;">🔄 App aktualisieren</button>
+  </div>
 </div>
 
 <script>
-  let html5QrCode;
-  const getUrl = () => document.getElementById('backend-url').value;
+  let html5QrCode;
+  const getUrl = () => document.getElementById('backend-url').value;
 
-  async function sendBuchung(typ) {
-    const url = getUrl();
-    const data = { aktion: "buchung", daten: { typ: typ, artikel: document.getElementById('w-artikel').value, menge: document.getElementById('w-menge').value, platz: document.getElementById('w-platz').value } };
-    if(!data.daten.artikel || !data.daten.platz) return alert("Fehlende Daten!");
-    fetch(url, { method: "POST", mode: "no-cors", body: JSON.stringify(data) });
-    alert("Gesendet: " + typ);
-    document.getElementById('w-artikel').value = "";
-  }
+  async function sendBuchung(typ) {
+    const url = getUrl();
+    const data = { aktion: "buchung", daten: { typ: typ, artikel: document.getElementById('w-artikel').value, menge: document.getElementById('w-menge').value, platz: document.getElementById('w-platz').value } };
+    if(!data.daten.artikel || !data.daten.platz) return alert("Fehler: Bitte Platz und Artikel erfassen.");
+    
+    try {
+      fetch(url, { method: "POST", mode: "no-cors", body: JSON.stringify(data) });
+      alert("Erfolg: " + typ + " wurde registriert.");
+      document.getElementById('w-artikel').value = "";
+    } catch(e) { alert("Fehler beim Senden."); }
+  }
 
-  async function sendAbfrage() {
-    const url = getUrl();
-    const platzId = document.getElementById('p-platz').value;
-    const resBox = document.getElementById('p-ergebnis');
-    resBox.innerHTML = "⏳ Suche...";
-    try {
-      const response = await fetch(`${url}?aktion=pruefung&platzId=${encodeURIComponent(platzId)}`);
-      const data = await response.json();
-      resBox.innerHTML = (data.res) ? `📦 <b>${data.res.artikel}</b><br>🔢 Bestand: ${data.res.menge}` : "❌ Platz leer.";
-    } catch (e) { resBox.innerHTML = "⚠️ Fehler."; }
-  }
+  async function sendAbfrage() {
+    const url = getUrl();
+    const platzId = document.getElementById('p-platz').value;
+    const resBox = document.getElementById('p-ergebnis');
+    resBox.innerHTML = "⏳ Abfrage läuft...";
+    try {
+      const response = await fetch(`${url}?aktion=pruefung&platzId=${encodeURIComponent(platzId)}`);
+      const data = await response.json();
+      resBox.innerHTML = (data.res) ? `📦 <b>${data.res.artikel}</b><br>🔢 Bestand: ${data.res.menge}` : "❌ Dieser Platz ist leer.";
+    } catch (e) { resBox.innerHTML = "⚠️ Verbindung zum Server unterbrochen."; }
+  }
 
-  async function sendWarensuche() {
-    const url = getUrl();
-    const artikelId = document.getElementById('s-artikel').value;
-    const resBox = document.getElementById('s-ergebnis');
-    resBox.innerHTML = "⏳ Suche Plätze...";
-    try {
-      const response = await fetch(`${url}?aktion=warensuche&artikelId=${encodeURIComponent(artikelId)}`);
-      const data = await response.json();
-      if(data.res && data.res.length > 0) {
-        let html = "<table><tr><th>Platz</th><th>Bestand</th></tr>";
-        data.res.forEach(item => { html += `<tr><td>📍 ${item.platz}</td><td>${item.menge}</td></tr>`; });
-        html += "</table>";
-        resBox.innerHTML = html;
-      } else { resBox.innerHTML = "❌ Artikel nirgends vorrätig."; }
-    } catch (e) { resBox.innerHTML = "⚠️ Fehler."; }
-  }
+  async function sendWarensuche() {
+    const url = getUrl();
+    const artikelId = document.getElementById('s-artikel').value;
+    const resBox = document.getElementById('s-ergebnis');
+    resBox.innerHTML = "⏳ Bestände werden geladen...";
+    try {
+      const response = await fetch(`${url}?aktion=warensuche&artikelId=${encodeURIComponent(artikelId)}`);
+      const data = await response.json();
+      if(data.res && data.res.length > 0) {
+        let html = "<table><tr><th>Lagerplatz</th><th>Bestand</th></tr>";
+        data.res.forEach(item => { html += `<tr><td>📍 ${item.platz}</td><td>${item.menge}</td></tr>`; });
+        html += "</table>";
+        resBox.innerHTML = html;
+      } else { resBox.innerHTML = "❌ Artikel nicht im Bestand gefunden."; }
+    } catch (e) { resBox.innerHTML = "⚠️ Fehler bei der Suche."; }
+  }
 
-  function switchTab(tabId) {
-    document.querySelectorAll('.card').forEach(c => c.classList.remove('active'));
-    document.querySelectorAll('.nav button').forEach(b => b.classList.remove('active'));
-    document.getElementById(tabId).classList.add('active');
-    
-    // Aktiviert den richtigen Nav-Button
-    const btnIdMap = { 'warenbewegung': 'btn-waren', 'platzpruefung': 'btn-platz', 'warensuche': 'btn-suche', 'einstellungen': 'btn-settings' };
-    document.getElementById(btnIdMap[tabId]).classList.add('active');
-    
-    if (html5QrCode) {
-      html5QrCode.stop().then(() => startScanner(tabId)).catch(() => startScanner(tabId));
-    } else { startScanner(tabId); }
-  }
+  function switchTab(tabId) {
+    document.querySelectorAll('.card').forEach(c => c.classList.remove('active'));
+    document.querySelectorAll('.nav button').forEach(b => b.classList.remove('active'));
+    document.getElementById(tabId).classList.add('active');
+    
+    const btnMap = { 'warenbewegung': 'btn-waren', 'platzpruefung': 'btn-platz', 'warensuche': 'btn-suche', 'einstellungen': 'btn-settings' };
+    document.getElementById(btnMap[tabId]).classList.add('active');
+    
+    if (html5QrCode) {
+      html5QrCode.stop().then(() => startScanner(tabId)).catch(() => startScanner(tabId));
+    } else { startScanner(tabId); }
+  }
 
-  function startScanner(tabId) {
-    const map = { 'warenbewegung': 'reader-waren', 'platzpruefung': 'reader-platz', 'warensuche': 'reader-suche' };
-    const elId = map[tabId];
-    if(!elId) return;
-    html5QrCode = new Html5Qrcode(elId);
-    html5QrCode.start({ facingMode: "environment" }, { fps: 10, qrbox: 250 }, (txt) => {
-      if(tabId === 'warenbewegung') {
-        if(!document.getElementById('w-platz').value) document.getElementById('w-platz').value = txt;
-        else document.getElementById('w-artikel').value = txt;
-      } else if(tabId === 'platzpruefung') {
-        document.getElementById('p-platz').value = txt;
-        sendAbfrage();
-      } else if(tabId === 'warensuche') {
-        document.getElementById('s-artikel').value = txt;
-        sendWarensuche();
-      }
-      navigator.vibrate(50);
-    }).catch(() => {});
-  }
-  window.onload = () => startScanner('warenbewegung');
+  function startScanner(tabId) {
+    const map = { 'warenbewegung': 'reader-waren', 'platzpruefung': 'reader-platz', 'warensuche': 'reader-suche' };
+    const elId = map[tabId];
+    if(!elId) return;
+    html5QrCode = new Html5Qrcode(elId);
+    html5QrCode.start({ facingMode: "environment" }, { fps: 15, qrbox: 250 }, (txt) => {
+      if(tabId === 'warenbewegung') {
+        if(!document.getElementById('w-platz').value) document.getElementById('w-platz').value = txt;
+        else document.getElementById('w-artikel').value = txt;
+      } else if(tabId === 'platzpruefung') {
+        document.getElementById('p-platz').value = txt;
+        sendAbfrage();
+      } else if(tabId === 'warensuche') {
+        document.getElementById('s-artikel').value = txt;
+        sendWarensuche();
+      }
+      if (window.navigator.vibrate) window.navigator.vibrate(50);
+    }).catch(() => {});
+  }
+  window.onload = () => startScanner('warenbewegung');
 </script>
 </body>
 </html>
