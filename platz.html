@@ -2,52 +2,65 @@
 <html lang="de">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Platz Info</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Platz Info | Lager Pro</title>
   <script src="https://unpkg.com/html5-qrcode"></script>
   <style>
     :root { --p: #0f172a; --a: #2563eb; --bg: #f1f5f9; }
+    * { box-sizing: border-box; }
     body { font-family: sans-serif; background: var(--bg); margin: 0; }
-    header { background: white; height: 60px; display: flex; align-items: center; justify-content: center; shadow: 0 2px 5px rgba(0,0,0,0.05); }
+    header { background: white; height: 60px; display: flex; align-items: center; justify-content: center; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
     .container { max-width: 450px; margin: 0 auto; padding: 15px; }
     .card { background: white; padding: 20px; border-radius: 20px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); }
-    #reader { width: 100%; border-radius: 15px; overflow: hidden; aspect-ratio: 1; background: #000; margin-bottom: 15px; }
-    input { width: 100%; padding: 12px; margin: 5px 0 15px 0; border: 1.5px solid #e2e8f0; border-radius: 10px; font-size: 16px; box-sizing: border-box; }
-    .res { background: #f8fafc; padding: 15px; border-radius: 12px; border-left: 4px solid var(--a); margin-top: 10px; min-height: 50px; }
-    .back { display: block; text-align: center; margin-top: 20px; text-decoration: none; color: var(--a); font-weight: bold; }
+    #reader { width: 100%; border-radius: 15px; overflow: hidden; background: #000; margin-bottom: 15px; }
+    input { width: 100%; padding: 14px; margin: 10px 0; border: 1.5px solid #e2e8f0; border-radius: 12px; font-size: 16px; }
+    .res { background: #f8fafc; padding: 20px; border-radius: 15px; border-left: 5px solid var(--a); margin-top: 15px; min-height: 80px; }
+    .back { display: block; text-align: center; margin-top: 25px; text-decoration: none; color: var(--a); font-weight: bold; }
   </style>
 </head>
 <body>
   <header><img src="logo.png" style="height:35px;"></header>
   <div class="container">
     <div class="card">
-      <h3>📍 Platz-Info</h3>
+      <h3 style="margin:0 0 15px 0;">📍 Platz-Info</h3>
       <div id="reader"></div>
-      <input type="text" id="pi" placeholder="Platz scannen..." onchange="check()">
-      <div id="out" class="res">Warte auf Scan...</div>
+      <label style="font-size:11px; font-weight:bold; color:#94a3b8; margin-left:5px;">PLATZ SCANNEN</label>
+      <input type="text" id="pi" placeholder="Platz-Code..." onchange="check()">
+      <div id="out" class="res">Scannen Sie einen Lagerplatz für Details...</div>
     </div>
     <a href="index.html" class="back">← Hauptmenü</a>
   </div>
+
   <script>
-    const api = "https://script.google.com/macros/s/AKfycbw00lwpfUmaVNLP5D-ldJ9Kt2tr47-PePzhmCQpyzx7e3Csbdk8MC4SiLmZnCKohgHfCA/exec";
-    let sc = new Html5Qrcode("reader");
+    const api = "https://script.google.com/macros/s/AKfycbzibU0CKU1mBRcvhaqY_ObcJUmRTcbBEWYJFvw5ft-GMFpn6Xpc57FXTvJvIqpEdiFnpg/exec"; // DEINE URL HIER
 
     async function check() {
-      const p = document.getElementById('pi').value;
+      const p = document.getElementById('pi').value.trim();
       if(!p) return;
-      document.getElementById('out').innerText = "Suche...";
+      
+      const outDiv = document.getElementById('out');
+      outDiv.innerHTML = "<i>Suche Daten...</i>";
       
       try {
-        const r = await fetch(`${api}?aktion=pruefung&platzId=${encodeURIComponent(p)}`);
-        const d = await r.json();
-        document.getElementById('out').innerHTML = d.res 
-          ? `<b>${d.res.name}</b><br>ID: ${d.res.artikel}<br>Bestand: ${d.res.menge}` 
-          : "Dieser Platz ist aktuell leer.";
+        const response = await fetch(`${api}?aktion=pruefung&platzId=${encodeURIComponent(p)}`);
+        const data = await response.json();
+        
+        if (data.res) {
+          outDiv.innerHTML = `
+            <div style="font-size: 0.85rem; color: #64748b;">AKTUELLER INHALT:</div>
+            <div style="font-size: 1.2rem; font-weight: 800; color: var(--p); margin: 5px 0;">${data.res.name}</div>
+            <div style="font-size: 0.9rem;">ID: ${data.res.artikel}</div>
+            <div style="margin-top:10px; font-size:1.1rem;">Bestand: <b>${data.res.menge} Stk.</b></div>
+          `;
+        } else {
+          outDiv.innerHTML = "<b>Dieser Platz ist leer oder unbekannt.</b>";
+        }
       } catch(e) { 
-        document.getElementById('out').innerText = "Fehler bei der Abfrage."; 
+        outDiv.innerHTML = "<span style='color:red;'>Fehler bei der Abfrage.</span>"; 
       }
     }
 
+    let sc = new Html5Qrcode("reader");
     sc.start({facingMode:"environment"}, {fps:15, qrbox:250}, (txt) => {
       document.getElementById('pi').value = txt; 
       check();
