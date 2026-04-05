@@ -1,113 +1,128 @@
 <!DOCTYPE html>
 <html lang="de">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Artikelsuche | Lager Pro</title>
-  <script src="https://unpkg.com/html5-qrcode"></script>
-  <style>
-    :root { --p: #0f172a; --a: #2563eb; --bg: #f1f5f9; }
-    * { box-sizing: border-box; }
-    body { font-family: sans-serif; background: var(--bg); margin: 0; padding: 0; }
-    
-    header { background: white; height: 65px; display: flex; align-items: center; justify-content: center; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
-    .logo { height: 40px; }
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Artikelsuche | Lager Pro</title>
+  <script src="https://unpkg.com/html5-qrcode"></script>
+  <style>
+    :root { --p: #0f172a; --a: #2563eb; --bg: #f1f5f9; }
+    * { box-sizing: border-box; }
+    body { font-family: sans-serif; background: var(--bg); margin: 0; padding: 0; }
+    
+    header { background: white; height: 65px; display: flex; align-items: center; justify-content: center; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+    .logo { height: 40px; }
 
-    .container { max-width: 450px; margin: 0 auto; padding: 15px; }
-    .card { background: white; padding: 20px; border-radius: 20px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); border: 1px solid #e2e8f0; }
-    
-    #reader { width: 100%; border-radius: 15px; overflow: hidden; aspect-ratio: 1; background: #000; margin-bottom: 15px; border: 2px solid #e2e8f0; }
-    
-    input { width: 100%; padding: 14px; margin: 5px 0 15px 0; border: 1.5px solid #e2e8f0; border-radius: 12px; font-size: 16px; outline: none; background: #fcfcfd; }
-    input:focus { border-color: var(--a); background: white; }
+    .container { max-width: 450px; margin: 0 auto; padding: 15px; }
+    .card { background: white; padding: 20px; border-radius: 20px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); border: 1px solid #e2e8f0; }
+    
+    #reader { width: 100%; border-radius: 15px; overflow: hidden; aspect-ratio: 1; background: #000; margin-bottom: 15px; border: 2px solid #e2e8f0; }
+    
+    input { width: 100%; padding: 14px; margin: 5px 0 15px 0; border: 1.5px solid #e2e8f0; border-radius: 12px; font-size: 16px; outline: none; background: #fcfcfd; }
+    input:focus { border-color: var(--a); background: white; }
 
-    /* Ergebnisanzeige */
-    .res-area { margin-top: 10px; }
-    .art-name { font-weight: 800; color: var(--p); font-size: 1.1rem; margin-bottom: 10px; display: block; }
-    
-    table { width: 100%; border-collapse: collapse; background: #f8fafc; border-radius: 12px; overflow: hidden; }
-    th { text-align: left; background: #e2e8f0; color: #475569; font-size: 11px; padding: 10px; text-transform: uppercase; }
-    td { padding: 12px 10px; border-bottom: 1px solid #e2e8f0; font-size: 15px; color: var(--p); }
-    tr:last-child td { border-bottom: none; }
-    .empty { padding: 20px; text-align: center; color: #64748b; font-style: italic; }
+    .res-area { margin-top: 10px; }
+    .art-name { font-weight: 800; color: var(--p); font-size: 1.1rem; margin-bottom: 10px; display: block; }
+    
+    table { width: 100%; border-collapse: collapse; background: #f8fafc; border-radius: 12px; overflow: hidden; }
+    th { text-align: left; background: #e2e8f0; color: #475569; font-size: 11px; padding: 10px; text-transform: uppercase; }
+    td { padding: 12px 10px; border-bottom: 1px solid #e2e8f0; font-size: 15px; color: var(--p); }
+    tr:last-child td { border-bottom: none; }
+    .empty { padding: 20px; text-align: center; color: #64748b; font-style: italic; }
 
-    .back { display: block; text-align: center; margin-top: 25px; text-decoration: none; color: var(--a); font-weight: bold; font-size: 0.9rem; }
-    
-    #ov { display: none; position: fixed; inset: 0; background: rgba(255,255,255,0.8); z-index: 99; flex-direction: column; align-items: center; justify-content: center; backdrop-filter: blur(2px); }
-  </style>
+    .back { display: block; text-align: center; margin-top: 25px; text-decoration: none; color: var(--a); font-weight: bold; font-size: 0.9rem; }
+    
+    /* Overlay für Wartezeit */
+    #ov { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 99; flex-direction: column; align-items: center; justify-content: center; backdrop-filter: blur(2px); color: white; }
+  </style>
 </head>
 <body>
 
-  <div id="ov"><b>Suche Bestände...</b></div>
+  <div id="ov"><b>Suche Bestände...</b></div>
 
-  <header>
-    <img src="logo.png" alt="Logo" class="logo">
-  </header>
+  <header>
+    <img src="logo.png" alt="Logo" class="logo">
+  </header>
 
-  <div class="container">
-    <div class="card">
-      <h3 style="margin-top:0; color:var(--p);">🔎 Artikelsuche</h3>
-      
-      <div id="reader"></div>
-      
-      <label style="font-size:11px; font-weight:bold; color:#94a3b8; margin-left:5px;">ARTIKEL SCANNEN</label>
-      <input type="text" id="artInput" placeholder="Artikel-ID eingeben..." onchange="suche()">
-      
-      <div id="result" class="res-area">
-        </div>
-    </div>
+  <div class="container">
+    <div class="card">
+      <h3 style="margin-top:0; color:var(--p);">🔎 Artikelsuche</h3>
+      
+      <div id="reader"></div>
+      
+      <label style="font-size:11px; font-weight:bold; color:#94a3b8; margin-left:5px;">ARTIKEL SCANNEN ODER EINGEBEN</label>
+      <input type="text" id="artInput" placeholder="Artikel-ID..." onchange="suche()">
+      
+      <div id="result" class="res-area">
+        </div>
+    </div>
 
-    <a href="index.html" class="back">← Zurück zum Hauptmenü</a>
-  </div>
+    <a href="index.html" class="back">← Zurück zum Hauptmenü</a>
+  </div>
 
-  <script>
-    // DEINE URL HIER EINTRAGEN
-    var api = "https://script.google.com/macros/s/AKfycbxW6utDnfsWVhh3FyMno66TkGXeyItimsd6o-5a61aMuhnVQStw6WZfLh6v4aJi8qFJZQ/exec";
-    
-    var sc = new Html5Qrcode("reader");
+  <script>
+    // DEINE URL HIER EINTRAGEN
+    const api = "https://script.google.com/macros/s/AKfycbw00lwpfUmaVNLP5D-ldJ9Kt2tr47-PePzhmCQpyzx7e3Csbdk8MC4SiLmZnCKohgHfCA/exec";
+    
+    let sc = new Html5Qrcode("reader");
 
-    async function suche() {
-      var id = document.getElementById('artInput').value;
-      if(!id) return;
+    async function suche() {
+      const id = document.getElementById('artInput').value;
+      if(!id) return;
 
-      document.getElementById('ov').style.display = 'flex';
-      var resDiv = document.getElementById('result');
-      
-      try {
-        var r = await fetch(api + "?aktion=warensuche&artikelId=" + encodeURIComponent(id));
-        var d = await r.json();
-        
-        if(d.res && d.res.length > 0) {
-          var html = `<span class="art-name">${d.name || "Unbenannter Artikel"}</span>`;
-          html += `<table><tr><th>Platz</th><th>Menge</th></tr>`;
-          
-          d.res.forEach(item => {
-            html += `<tr><td>📍 ${item.platz}</td><td><b>${item.menge}</b></td></tr>`;
-          });
-          
-          html += `</table>`;
-          resDiv.innerHTML = html;
-        } else {
-          resDiv.innerHTML = `<div class="empty">Kein Bestand für diesen Artikel gefunden.</div>`;
-        }
-      } catch(e) {
-        resDiv.innerHTML = `<div class="empty" style="color:red;">Verbindungsfehler zum Server.</div>`;
-      }
-      
-      document.getElementById('ov').style.display = 'none';
-    }
+      const resDiv = document.getElementById('result');
+      const overlay = document.getElementById('ov');
+      
+      // Lade-Status anzeigen
+      overlay.style.display = 'flex';
+      resDiv.innerHTML = "";
+      
+      try {
+        // API Aufruf mit Warte-Logik (await)
+        const response = await fetch(`${api}?aktion=warensuche&artikelId=${encodeURIComponent(id)}`);
+        
+        if (!response.ok) throw new Error("Server-Fehler");
+        
+        const d = await response.json();
+        
+        if(d.res && d.res.length > 0) {
+          let html = `<span class="art-name">${d.name || "Unbenannter Artikel"}</span>`;
+          html += `<table><tr><th>Platz</th><th>Menge</th></tr>`;
+          
+          // Sortierung: Größte Menge zuerst
+          d.res.sort((a, b) => b.menge - a.menge);
 
-    // Scanner starten
-    sc.start(
-      { facingMode: "environment" }, 
-      { fps: 20, qrbox: 250 },
-      (txt) => {
-        document.getElementById('artInput').value = txt;
-        suche();
-        if(window.navigator.vibrate) window.navigator.vibrate(50);
-      }
-    ).catch(err => console.error("Kamerafehler:", err));
-  </script>
+          d.res.forEach(item => {
+            html += `<tr><td>📍 ${item.platz}</td><td><b>${item.menge}</b></td></tr>`;
+          });
+          
+          html += `</table>`;
+          resDiv.innerHTML = html;
+        } else {
+          resDiv.innerHTML = `<div class="empty">Kein Bestand für "${id}" gefunden.</div>`;
+        }
+      } catch(e) {
+        resDiv.innerHTML = `<div class="empty" style="color:red;">Verbindungsfehler: Bitte Internetverbindung prüfen.</div>`;
+        console.error("Suche fehlgeschlagen:", e);
+      } finally {
+        // Lade-Status ausblenden
+        overlay.style.display = 'none';
+      }
+    }
+
+    // Scanner starten
+    sc.start(
+      { facingMode: "environment" }, 
+      { fps: 15, qrbox: 250 },
+      (txt) => {
+        document.getElementById('artInput').value = txt;
+        suche(); // Suche automatisch nach Scan auslösen
+        if(window.navigator.vibrate) window.navigator.vibrate(50);
+      }
+    ).catch(err => {
+      console.error("Kamera konnte nicht gestartet werden:", err);
+    });
+  </script>
 
 </body>
 </html>
