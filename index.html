@@ -1,97 +1,164 @@
 <!DOCTYPE html>
 <html lang="de">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Buchen | Lager Pro</title>
-  <script src="https://unpkg.com/html5-qrcode"></script>
-  <style>
-    :root { --p: #0f172a; --a: #2563eb; --d: #ef4444; --s: #22c55e; --bg: #f8fafc; }
-    body { font-family: sans-serif; background: var(--bg); margin: 0; padding: 0; }
-    header { background: white; height: 70px; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
-    .logo { height: 45px; }
-    .nav { display: grid; grid-template-columns: repeat(4, 1fr); gap: 5px; padding: 15px; max-width: 450px; margin: 0 auto; }
-    .nav a { text-decoration: none; background: white; border: 1px solid #e2e8f0; border-radius: 10px; padding: 12px 2px; font-size: 10px; font-weight: 800; color: #64748b; text-align: center; text-transform: uppercase; }
-    .nav a.active { background: var(--a); color: white; border-color: var(--a); }
-    .container { max-width: 450px; margin: 0 auto; padding: 0 15px; }
-    .card { background: white; padding: 20px; border-radius: 20px; box-shadow: 0 4px 6px rgba(0,0,0,0.02); }
-    input { width: 100%; padding: 14px; margin: 8px 0; border: 1px solid #e2e8f0; border-radius: 12px; font-size: 16px; outline: none; }
-    .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px; }
-    .btn { padding: 16px; border: none; border-radius: 12px; color: white; font-weight: bold; cursor: pointer; }
-    #reader { width: 100%; border-radius: 15px; overflow: hidden; aspect-ratio: 1; background: #000; margin-bottom: 10px; }
-    #overlay { display: none; position: fixed; inset: 0; background: rgba(255,255,255,0.8); z-index: 2000; flex-direction: column; align-items: center; justify-content: center; }
-    .loader { width: 30px; height: 30px; border: 3px solid #f3f3f3; border-top: 3px solid var(--a); border-radius: 50%; animation: spin 1s linear infinite; }
-    @keyframes spin { to { transform: rotate(360deg); } }
-  </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Buchen | Lager Pro</title>
+  <script src="https://unpkg.com/html5-qrcode"></script>
+  <style>
+    :root { --p: #0f172a; --a: #2563eb; --d: #ef4444; --s: #22c55e; --bg: #f8fafc; }
+    * { box-sizing: border-box; }
+    body { font-family: sans-serif; background: var(--bg); margin: 0; padding: 0; color: #334155; }
+    
+    header { background: white; height: 70px; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 10px rgba(0,0,0,0.05); position: sticky; top: 0; z-index: 1000; }
+    .logo { height: 45px; object-fit: contain; }
+
+    .nav { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; padding: 15px; max-width: 450px; margin: 0 auto; }
+    .nav a { text-decoration: none; background: white; border: 1px solid #e2e8f0; border-radius: 10px; padding: 12px 2px; font-size: 10px; font-weight: 800; color: #64748b; text-align: center; text-transform: uppercase; display: block; }
+    .nav a.active { background: var(--a); color: white; border-color: var(--a); box-shadow: 0 4px 10px rgba(37, 99, 235, 0.2); }
+
+    .container { max-width: 450px; margin: 0 auto; padding: 0 15px 30px 15px; }
+    .card { background: white; padding: 20px; border-radius: 20px; box-shadow: 0 4px 6px rgba(0,0,0,0.02); border: 1px solid #f1f5f9; }
+    
+    h3 { margin: 0 0 15px 0; font-size: 1.1rem; border-bottom: 2px solid #f8fafc; padding-bottom: 8px; }
+    input { width: 100%; padding: 14px; margin: 8px 0; border: 1px solid #e2e8f0; border-radius: 12px; font-size: 16px; outline: none; background: #fcfcfd; }
+    input:focus { border-color: var(--a); background: white; }
+
+    .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 10px; }
+    .btn { padding: 18px; border: none; border-radius: 14px; color: white; font-weight: bold; cursor: pointer; font-size: 14px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+    
+    #reader { width: 100%; border-radius: 15px; overflow: hidden; aspect-ratio: 1; background: #000; margin-bottom: 15px; border: 2px solid #eee; }
+    
+    /* Overlay */
+    #overlay { display: none; position: fixed; inset: 0; background: rgba(255,255,255,0.9); z-index: 2000; flex-direction: column; align-items: center; justify-content: center; backdrop-filter: blur(4px); }
+    .loader { width: 40px; height: 40px; border: 4px solid #f3f3f3; border-top: 4px solid var(--a); border-radius: 50%; animation: spin 1s linear infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    #stat { margin-top: 15px; font-weight: bold; color: var(--p); }
+  </style>
 </head>
 <body>
 
-<div id="overlay"><div class="loader"></div><p id="stat">Verarbeite...</p></div>
+<div id="overlay">
+  <div class="loader"></div>
+  <p id="stat">Verarbeite...</p>
+</div>
 
-<header><img src="logo.png" class="logo"></header>
+<header>
+  <img src="logo.png" alt="Logo" class="logo">
+</header>
 
 <div class="nav">
-  <a href="index.html" class="active">Buchen</a>
-  <a href="platz.html">Platz</a>
-  <a href="suche.html">Suche</a>
-  <a href="setup.html">Setup</a>
+  <a href="index.html" class="active">Buchen</a>
+  <a href="platz.html">Platz</a>
+  <a href="suche.html">Suche</a>
+  <a href="setup.html">Setup</a>
 </div>
 
 <div class="container">
-  <div class="card">
-    <h3>📦 Buchung</h3>
-    <div id="reader"></div>
-    <input type="text" id="w-p" placeholder="Platz scannen">
-    <input type="text" id="w-a" placeholder="Artikel scannen">
-    <input type="number" id="w-m" value="1">
-    <div class="grid">
-      <button class="btn" style="background:var(--s)" onclick="send('Einlagerung')">EIN</button>
-      <button class="btn" style="background:var(--d)" onclick="send('Entnahme')">AUS</button>
-    </div>
-  </div>
+  <div class="card">
+    <h3>📦 Warenbewegung</h3>
+    <div id="reader"></div>
+    <input type="text" id="w-p" placeholder="Lagerplatz scannen">
+    <input type="text" id="w-a" placeholder="Artikel scannen">
+    <input type="number" id="w-m" value="1" placeholder="Menge">
+    <div class="grid">
+      <button class="btn" style="background:var(--s)" onclick="send('Einlagerung')">📥 EIN</button>
+      <button class="btn" style="background:var(--d)" onclick="send('Entnahme')">📤 AUS</button>
+    </div>
+  </div>
 </div>
 
 <script>
-  var api = "https://script.google.com/macros/s/AKfycbzO_0a0BPGJwSE-IyoN6wP_pivLAWezj2IDhK-SIguOuYUBt0RJXEwDVUCwKDxQ5-8Efg/exec";
-  var scanner = new Html5Qrcode("reader");
+  // WICHTIG: Setze hier deine aktuelle Google Web-App URL ein!
+  var api = "https://script.google.com/macros/s/AKfycbzO_0a0BPGJwSE-IyoN6wP_pivLAWezj2IDhK-SIguOuYUBt0RJXEwDVUCwKDxQ5-8Efg/exec";
+  
+  var scanner = new Html5Qrcode("reader");
 
-  function setStatus(s, t="Lade...") { 
-    document.getElementById('stat').innerText = t;
-    document.getElementById('overlay').style.display = s ? 'flex' : 'none';
-  }
+  function setStatus(show, text = "Lade...") { 
+    document.getElementById('stat').innerText = text;
+    document.getElementById('overlay').style.display = show ? 'flex' : 'none';
+  }
 
-  async function send(typ) {
-    var art = document.getElementById('w-a').value;
-    var plz = document.getElementById('w-p').value;
-    if(!art || !plz) return alert("Fehlende Daten!");
+  async function send(typ) {
+    var art = document.getElementById('w-a').value;
+    var plz = document.getElementById('w-p').value;
+    var men = document.getElementById('w-m').value;
+    
+    if(!art || !plz || !men) {
+      alert("Bitte alle Felder ausfüllen (Platz, Artikel und Menge)!");
+      return;
+    }
 
-    setStatus(true, "Prüfe Artikel...");
-    var nName = "";
-    try {
-      var r = await fetch(api + "?aktion=warensuche&artikelId=" + encodeURIComponent(art));
-      var d = await r.json();
-      if(!d.name) {
-        setStatus(false);
-        nName = prompt("Neuer Artikel! Name:");
-        if(!nName) return;
-        setStatus(true, "Speichere...");
-      }
-    } catch(e) {}
+    setStatus(true, "Prüfe Stammdaten...");
+    var nName = "";
 
-    setStatus(true, "Buchung läuft...");
-    try {
-      await fetch(api, {method:"POST", body:JSON.stringify({aktion:"buchung", daten:{typ:typ, artikel:art, menge:document.getElementById('w-m').value, platz:plz, neuerName:nName}})});
-      setStatus(false);
-      alert("Erfolgreich!");
-      document.getElementById('w-a').value = "";
-    } catch(e) { setStatus(false); alert("Gesendet."); }
-  }
+    // 1. Artikelprüfung (GET)
+    try {
+      var checkR = await fetch(api + "?aktion=warensuche&artikelId=" + encodeURIComponent(art));
+      var checkD = await checkR.json();
+      if(!checkD.name) {
+        setStatus(false);
+        nName = prompt("Neuer Artikel erkannt! Bitte Bezeichnung eingeben:");
+        if(!nName) return; // Abbrechen wenn kein Name eingegeben wurde
+        setStatus(true, "Artikel wird angelegt...");
+      }
+    } catch(e) {
+      console.log("Stammdaten-Check übersprungen.");
+    }
 
-  scanner.start({facingMode:"environment"}, {fps:15, qrbox:250}, (txt) => {
-    if(!document.getElementById('w-p').value) document.getElementById('w-p').value = txt;
-    else document.getElementById('w-a').value = txt;
-    if(window.navigator.vibrate) window.navigator.vibrate(50);
-  }).catch(()=>{});
+    setStatus(true, "Buchung wird gesendet...");
+
+    // 2. Buchung senden (POST)
+    var payload = {
+      aktion: "buchung",
+      daten: {
+        typ: typ,
+        artikel: art,
+        menge: men,
+        platz: plz,
+        neuerName: nName
+      }
+    };
+
+    try {
+      await fetch(api, {
+        method: "POST",
+        mode: "no-cors", // Wichtig für Google Apps Script Redirects
+        cache: "no-cache",
+        body: JSON.stringify(payload)
+      });
+
+      setStatus(false);
+      alert("✅ Buchung erfolgreich übertragen!");
+      // Felder zurücksetzen für den nächsten Scan
+      document.getElementById('w-a').value = "";
+    } catch(err) {
+      setStatus(false);
+      alert("Fehler: " + err.toString());
+    }
+  }
+
+  // Scanner Start
+  scanner.start(
+    { facingMode: "environment" }, 
+    { fps: 15, qrbox: 250 },
+    (txt) => {
+      // Logik: Zuerst Platz füllen, dann Artikel
+      var pField = document.getElementById('w-p');
+      var aField = document.getElementById('w-a');
+      
+      if(!pField.value) {
+        pField.value = txt;
+      } else {
+        aField.value = txt;
+      }
+      
+      if(window.navigator.vibrate) window.navigator.vibrate(50);
+    }
+  ).catch(err => {
+    console.error("Scanner konnte nicht starten", err);
+  });
 </script>
+
 </body>
 </html>
