@@ -2,248 +2,100 @@
 <html lang="de">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-  <title>Buchen | Lager Pro</title>
-  <script src="https://unpkg.com/html5-qrcode"></script>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>Lager Pro | Dashboard</title>
   <style>
     :root { 
-      --p: #0f172a; 
-      --a: #2563eb; 
-      --d: #ef4444; 
-      --s: #22c55e; 
-      --bg: #f1f5f9; 
+      --p: #0f172a; --a: #2563eb; --bg: #f1f5f9; 
     }
     * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
     
     body { 
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; 
-      background: var(--bg); 
-      margin: 0; 
-      padding: 0; 
-      display: flex;
-      flex-direction: column;
-      min-height: 100vh;
+      font-family: -apple-system, system-ui, sans-serif; 
+      background: var(--bg); margin: 0; padding: 0;
+      display: flex; flex-direction: column; align-items: center;
     }
 
     header { 
-      background: white; 
-      height: 65px; 
-      display: flex; 
-      align-items: center; 
-      justify-content: center; 
-      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-      flex-shrink: 0;
+      width: 100%; background: white; height: 80px; 
+      display: flex; align-items: center; justify-content: center; 
+      box-shadow: 0 2px 10px rgba(0,0,0,0.05); margin-bottom: 20px;
     }
-    .logo { height: 40px; width: auto; object-fit: contain; }
+    .logo { height: 50px; }
 
-    .nav { 
-      display: grid; 
-      grid-template-columns: repeat(4, 1fr); 
-      gap: 8px; 
-      padding: 12px; 
-      background: white;
-      border-bottom: 1px solid #e2e8f0;
-    }
-    .nav a { 
-      text-decoration: none; 
-      background: #f8fafc; 
-      border: 1px solid #e2e8f0; 
-      border-radius: 8px; 
-      padding: 10px 2px; 
-      font-size: 11px; 
-      font-weight: 700; 
-      color: #64748b; 
-      text-align: center; 
-      text-transform: uppercase;
-    }
-    .nav a.active { background: var(--a); color: white; border-color: var(--a); }
+    .welcome { text-align: center; margin-bottom: 20px; color: var(--p); }
+    .welcome h1 { margin: 0; font-size: 1.5rem; }
+    .welcome p { margin: 5px 0 0; color: #64748b; font-size: 0.9rem; }
 
-    .main-scroll {
-      flex-grow: 1;
-      overflow-y: auto;
+    .menu-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 15px;
+      width: 100%;
+      max-width: 400px;
       padding: 15px;
     }
 
-    .card { 
-      background: white; 
-      padding: 20px; 
-      border-radius: 16px; 
-      box-shadow: 0 4px 12px rgba(0,0,0,0.05); 
-      max-width: 450px; 
-      margin: 0 auto;
-    }
-    
-    h3 { margin: 0 0 15px 0; font-size: 1.1rem; color: var(--p); text-align: center; }
-
-    /* Fix für den Scanner-Bereich */
-    #reader { 
-      width: 100%; 
-      max-width: 350px;
-      margin: 0 auto 15px auto;
-      border-radius: 12px; 
-      overflow: hidden; 
-      background: #000;
-      border: 2px solid #e2e8f0;
-      aspect-ratio: 1 / 1; /* Erzwingt quadratisches Layout */
-    }
-
-    .input-group { margin-bottom: 10px; }
-    label { font-size: 12px; font-weight: bold; color: #94a3b8; margin-left: 5px; }
-    
-    input { 
-      width: 100%; 
-      padding: 12px; 
-      margin-top: 4px;
-      border: 1.5px solid #e2e8f0; 
-      border-radius: 10px; 
-      font-size: 16px; 
-      outline: none; 
-      background: #fcfcfd;
-      transition: border-color 0.2s;
-    }
-    input:focus { border-color: var(--a); background: white; }
-
-    .grid-btns { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 20px; }
-    .btn { 
-      padding: 16px; 
-      border: none; 
-      border-radius: 12px; 
-      color: white; 
-      font-weight: 800; 
-      cursor: pointer; 
-      font-size: 15px; 
+    .menu-card {
+      background: white;
+      border-radius: 20px;
+      padding: 25px 15px;
+      text-decoration: none;
       display: flex;
+      flex-direction: column;
       align-items: center;
       justify-content: center;
-      gap: 8px;
+      box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
+      transition: transform 0.1s, box-shadow 0.1s;
+      border: 1px solid #e2e8f0;
     }
-    
-    /* Overlay */
-    #overlay { 
-      display: none; 
-      position: fixed; 
-      inset: 0; 
-      background: rgba(255,255,255,0.95); 
-      z-index: 9999; 
-      flex-direction: column; 
-      align-items: center; 
-      justify-content: center; 
-    }
-    .loader { 
-      width: 45px; height: 45px; 
-      border: 5px solid #f3f3f3; 
-      border-top: 5px solid var(--a); 
-      border-radius: 50%; 
-      animation: spin 1s linear infinite; 
-    }
-    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .menu-card:active { transform: scale(0.95); background: #f8fafc; }
+
+    .icon { font-size: 2.5rem; margin-bottom: 10px; }
+    .label { font-weight: 800; color: var(--p); font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.5px; }
+
+    /* Speziell für den Setup Button (unten drunter über volle Breite) */
+    .full-width { grid-column: span 2; padding: 15px; flex-direction: row; gap: 15px; }
   </style>
 </head>
 <body>
-
-<div id="overlay">
-  <div class="loader"></div>
-  <p id="stat" style="margin-top:15px; font-weight:bold;">Verarbeite...</p>
-</div>
 
 <header>
   <img src="logo.png" alt="Logo" class="logo">
 </header>
 
-<div class="nav">
-  <a href="index.html" class="active">Buchen</a>
-  <a href="platz.html">Platz</a>
-  <a href="suche.html">Suche</a>
-  <a href="setup.html">Setup</a>
+<div class="welcome">
+  <h1>Lager Management</h1>
+  <p>Super Supreme System v3.0</p>
 </div>
 
-<div class="main-scroll">
-  <div class="card">
-    <h3>📦 Warenbewegung</h3>
-    
-    <div id="reader"></div>
-    
-    <div class="input-group">
-      <label>LAGERPLATZ</label>
-      <input type="text" id="w-p" placeholder="Platz scannen oder tippen">
-    </div>
+<div class="menu-grid">
+  <a href="buchen.html" class="menu-card">
+    <div class="icon">📦</div>
+    <div class="label">Buchen</div>
+  </a>
 
-    <div class="input-group">
-      <label>ARTIKEL-ID</label>
-      <input type="text" id="w-a" placeholder="Artikel scannen oder tippen">
-    </div>
+  <a href="platz.html" class="menu-card">
+    <div class="icon">📍</div>
+    <div class="label">Platz-Info</div>
+  </a>
 
-    <div class="input-group">
-      <label>MENGE</label>
-      <input type="number" id="w-m" value="1">
-    </div>
+  <a href="suche.html" class="menu-card">
+    <div class="icon">🔎</div>
+    <div class="label">Suche</div>
+  </a>
 
-    <div class="grid-btns">
-      <button class="btn" style="background:var(--s)" onclick="send('Einlagerung')">📥 EIN</button>
-      <button class="btn" style="background:var(--d)" onclick="send('Entnahme')">📤 AUS</button>
-    </div>
-  </div>
+  <a href="#" class="menu-card" style="opacity: 0.5; pointer-events: none;">
+    <div class="icon">📊</div>
+    <div class="label">Statistik</div>
+  </a>
+
+  <a href="setup.html" class="menu-card full-width">
+    <div class="icon" style="font-size: 1.5rem; margin:0;">⚙️</div>
+    <div class="label">System-Einstellungen</div>
+  </a>
 </div>
-
-<script>
-  // DEINE URL HIER EINTRAGEN
-  var api = "https://script.google.com/macros/s/AKfycbxMyMD5PVAofcYYYojR4BuPIWrTqXP2y3ROvZPPkPovAFR0ny4CMxk1jSCnKK5Sb1TiJw/exec";
-  
-  var scanner = new Html5Qrcode("reader");
-
-  function setStatus(show, text = "Lade...") { 
-    document.getElementById('stat').innerText = text;
-    document.getElementById('overlay').style.display = show ? 'flex' : 'none';
-  }
-
-  async function send(typ) {
-    var art = document.getElementById('w-a').value;
-    var plz = document.getElementById('w-p').value;
-    var men = document.getElementById('w-m').value;
-    
-    if(!art || !plz) return alert("Bitte Platz und Artikel scannen!");
-
-    setStatus(true, "Prüfe Artikel...");
-    var nName = "";
-
-    try {
-      var checkR = await fetch(api + "?aktion=warensuche&artikelId=" + encodeURIComponent(art));
-      var checkD = await checkR.json();
-      if(!checkD.name) {
-        setStatus(false);
-        nName = prompt("Neuer Artikel! Bezeichnung:");
-        if(!nName) return;
-        setStatus(true, "Speichere...");
-      }
-    } catch(e) { console.log("Check übersprungen"); }
-
-    setStatus(true, "Buchung läuft...");
-    var payload = { aktion: "buchung", daten: { typ: typ, artikel: art, menge: men, platz: plz, neuerName: nName } };
-
-    try {
-      await fetch(api, { method: "POST", mode: "no-cors", body: JSON.stringify(payload) });
-      setStatus(false);
-      alert("✅ Erfasst!");
-      document.getElementById('w-a').value = ""; 
-    } catch(err) {
-      setStatus(false);
-      alert("Fehler beim Senden.");
-    }
-  }
-
-  // Scanner Start
-  scanner.start(
-    { facingMode: "environment" }, 
-    { fps: 20, qrbox: {width: 250, height: 250} },
-    (txt) => {
-      var pField = document.getElementById('w-p');
-      var aField = document.getElementById('w-a');
-      if(!pField.value) { pField.value = txt; } 
-      else { aField.value = txt; }
-      if(window.navigator.vibrate) window.navigator.vibrate(60);
-    }
-  ).catch(err => console.error(err));
-</script>
 
 </body>
 </html>
