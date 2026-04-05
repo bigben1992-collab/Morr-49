@@ -1,393 +1,249 @@
-function doGet(e) {
-  var ss = SpreadsheetApp.getActiveSpreadsheet();
-  var a = e.parameter.aktion;
-  try {
-    if (a === "pruefung") return JSON_RES(getPlz(ss, e.parameter.platzId));
-    if (a === "warensuche") return JSON_RES(getArt(ss, e.parameter.artikelId));
-    return JSON_RES({status: "error", msg: "Aktion unbekannt"});
-  } catch (err) { 
-    return JSON_RES({status: "error", msg: err.toString()}); 
-  }
-}
-
-function doPost(e) {
-  var ss = SpreadsheetApp.getActiveSpreadsheet();
-  var resData;
-  
-  try {
-    var d = JSON.parse(e.postData.contents).daten;
-    var zeit = Utilities.formatDate(new Date(), "GMT+2", "dd.MM.yyyy HH:mm");
-    
-    // Stammdaten ergänzen falls neu
-    if (d.neuerName) {
-      var sStamm = ss.getSheetByName("Stammdaten") || ss.insertSheet("Stammdaten");
-      sStamm.appendRow([d.artikel, d.neuerName]);
-    }
-    
-    var name = getName(ss, d.artikel) || "Unbekannt";
-    var mengeNum = parseFloat(d.menge.toString().replace(',', '.'));
-    var delta = (d.typ === "Entnahme") ? -mengeNum : mengeNum;
-
-    // Log schreiben
-    (ss.getSheetByName("Log") || ss.insertSheet("Log")).appendRow([zeit, d.typ, d.artikel, name, mengeNum, d.platz]);
-    
-    // Bestand aktualisieren
-    updBestand(ss, d.platz, d.artikel, name, delta);
-    
-    resData = {status: "success", name: name};
-  } catch (err) {
-    resData = {status: "error", msg: err.toString()};
-  }
-  
-  return JSON_RES(resData);
-}
-
-function getPlz(ss, id) {
-  var sheet = ss.getSheetByName("Bestand");
-  if (!sheet) return {res: null};
-  var d = sheet.getDataRange().getValues();
-  for (var i = 1; i < d.length; i++) {
-    if (d[i][0].toString().toLowerCase() === id.toLowerCase()) {
-      return {res: {artikel: d[i][1], name: d[i][2], menge: d[i][3]}};
-    }
-  }
-  return {res: null};
-}
-
-function getArt(ss, id) {
-  var sheet = ss.getSheetByName("Bestand");
-  var d = sheet ? sheet.getDataRange().getValues() : [];
-  var res = [];
-  for (var i = 1; i < d.length; i++) {
-    if (d[i][1].toString().toLowerCase() === id.toLowerCase() && parseFloat(d[i][3]) !== 0) {
-      res.push({platz: d[i][0], menge: d[i][3]});
-    }
-  }
-  return {res: res, name: getName(ss, id)};
-}
-
-function getName(ss, id) {
-  var sheet = ss.getSheetByName("Stammdaten");
-  var d = sheet ? sheet.getDataRange().getValues() : [];
-  for (var i = 1; i < d.length; i++) {
-    if (d[i][0].toString().toLowerCase() === id.toLowerCase()) return d[i][1];
-  }
-  return null;
-}
-
-function updBestand(ss, p, id, n, delta) {
-  var s = ss.getSheetByName("Bestand") || ss.insertSheet("Bestand");
-  var d = s.getDataRange().getValues();
-  
-  // Falle schließen: Suche nach existierendem Platz + Artikel Kombi
-  for (var i = 1; i < d.length; i++) {
-    if (d[i][0].toString().toLowerCase() === p.toLowerCase() && 
-        d[i][1].toString().toLowerCase() === id.toLowerCase()) {
-      var aktuellerBestand = parseFloat(d[i][3]) || 0;
-      s.getRange(i + 1, 4).setValue(aktuellerBestand + delta);
-      return;
-    }
-  }
-  // Wenn nicht gefunden, neu anlegen
-  s.appendRow([p, id, n, delta]);
-}
-
-function JSON_RES(obj) {
-  return ContentService.createTextOutput(JSON.stringify(obj))
-    .setMimeType(ContentService.MimeType.JSON);
-}
-
-
-buchen.html 
-
 <!DOCTYPE html>
 <html lang="de">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Buchen</title>
-  <script src="https://unpkg.com/html5-qrcode"></script>
-  <style>
-    :root { --p: #0f172a; --a: #2563eb; --s: #22c55e; --d: #ef4444; --bg: #f1f5f9; }
-    body { font-family: sans-serif; background: var(--bg); margin: 0; }
-    header { background: white; height: 60px; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
-    .container { max-width: 450px; margin: 0 auto; padding: 15px; }
-    .card { background: white; padding: 20px; border-radius: 20px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); }
-    #reader { width: 100%; border-radius: 15px; overflow: hidden; aspect-ratio: 1; background: #000; margin-bottom: 15px; }
-    input { width: 100%; padding: 12px; margin: 5px 0 15px 0; border: 1.5px solid #e2e8f0; border-radius: 10px; font-size: 16px; box-sizing: border-box; }
-    .btn-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-    .btn { padding: 16px; border: none; border-radius: 12px; color: white; font-weight: bold; cursor: pointer; }
-    .back { display: block; text-align: center; margin-top: 20px; text-decoration: none; color: var(--a); font-weight: bold; }
-    #ov { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 100; color:white; flex-direction: column; align-items: center; justify-content: center; }
-  </style>
-</head>
-<body>
-  <div id="ov"><h2 id="ovText">Verarbeite...</h2></div>
-  <header><img src="logo.png" style="height:35px;"></header>
-  <div class="container">
-    <div class="card">
-      <h3>📦 Buchen</h3>
-      <div id="reader"></div>
-      <input type="text" id="p" placeholder="Platz scannen">
-      <input type="text" id="a" placeholder="Artikel scannen">
-      <input type="number" id="m" value="1">
-      <div class="btn-row">
-        <button class="btn" style="background:var(--s)" onclick="run('Einlagerung')">EIN</button>
-        <button class="btn" style="background:var(--d)" onclick="run('Entnahme')">AUS</button>
-      </div>
-    </div>
-    <a href="index.html" class="back">← Hauptmenü</a>
-  </div>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Buchen | Lager Pro</title>
+  <script src="https://unpkg.com/html5-qrcode"></script>
+  <style>
+    :root {
+      --primary: #1e293b;
+      --accent: #3b82f6;
+      --success: #10b981;
+      --danger: #ef4444;
+      --bg: #f8fafc;
+      --card-bg: #ffffff;
+      --text: #334155;
+      --text-light: #94a3b8;
+    }
 
-  <script>
-    const api = "https://script.google.com/macros/s/AKfycbzibU0CKU1mBRcvhaqY_ObcJUmRTcbBEWYJFvw5ft-GMFpn6Xpc57FXTvJvIqpEdiFnpg/exec";
-    let sc = new Html5Qrcode("reader");
+    * { 
+      box-sizing: border-box; 
+      -webkit-tap-highlight-color: transparent;
+    }
 
-    async function run(t) {
-      const art = document.getElementById('a').value;
-      const plz = document.getElementById('p').value;
-      const menge = document.getElementById('m').value;
-      
-      if(!art || !plz || !menge) return alert("Daten unvollständig!");
-      
-      document.getElementById('ov').style.display = 'flex';
-      
-      try {
-        // 1. Artikel checken
-        let check = await fetch(`${api}?aktion=warensuche&artikelId=${art}`);
-        let checkData = await check.json();
-        
-        let nN = "";
-        if (!checkData.name) {
-          document.getElementById('ov').style.display = 'none';
-          nN = prompt("Neuer Artikel! Bitte Name eingeben:");
-          if (!nN) return;
-          document.getElementById('ov').style.display = 'flex';
-        }
+    body { 
+      font-family: 'Inter', -apple-system, sans-serif; 
+      background: var(--bg); 
+      color: var(--text);
+      margin: 0; 
+      line-height: 1.5;
+    }
 
-        // 2. Buchung senden (POST-Ersatz via Fetch)
-        const response = await fetch(api, {
-          method: "POST",
-          body: JSON.stringify({
-            daten: { typ: t, artikel: art, menge: menge, platz: plz, neuerName: nN }
-          })
-        });
-        
-        const result = await response.json();
-        
-        if(result.status === "success") {
-          alert("Erfolgreich gebucht: " + (result.name || art));
-          document.getElementById('a').value = "";
-          document.getElementById('m').value = "1";
-        } else {
-          alert("Fehler: " + result.msg);
-        }
-      } catch (e) {
-        alert("Netzwerkfehler oder ungültige URL!");
-      } finally {
-        document.getElementById('ov').style.display = 'none';
-      }
-    }
+    header { 
+      background: var(--card-bg); 
+      height: 70px; 
+      display: flex; 
+      align-items: center; 
+      justify-content: center; 
+      box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);
+      position: sticky;
+      top: 0;
+      z-index: 50;
+    }
 
-    sc.start({facingMode:"environment"}, {fps:15, qrbox:250}, (txt) => {
-      if(!document.getElementById('p').value) document.getElementById('p').value = txt;
-      else document.getElementById('a').value = txt;
-      if(window.navigator.vibrate) window.navigator.vibrate(50);
-    }).catch(err => console.log(err));
-  </script>
-</body>
-</html>
+    .container { 
+      max-width: 480px; 
+      margin: 0 auto; 
+      padding: 20px; 
+    }
 
+    .card { 
+      background: var(--card-bg); 
+      padding: 24px; 
+      border-radius: 24px; 
+      box-shadow: 0 10px 25px -5px rgba(0,0,0,0.05), 0 8px 10px -6px rgba(0,0,0,0.05); 
+    }
 
-platz.html 
+    h3 {
+      margin: 0 0 20px 0;
+      font-size: 1.25rem;
+      font-weight: 700;
+      color: var(--primary);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
 
-<!DOCTYPE html>
-<html lang="de">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Platz Info</title>
-  <script src="https://unpkg.com/html5-qrcode"></script>
-  <style>
-    :root { --p: #0f172a; --a: #2563eb; --bg: #f1f5f9; }
-    body { font-family: sans-serif; background: var(--bg); margin: 0; }
-    header { background: white; height: 60px; display: flex; align-items: center; justify-content: center; shadow: 0 2px 5px rgba(0,0,0,0.05); }
-    .container { max-width: 450px; margin: 0 auto; padding: 15px; }
-    .card { background: white; padding: 20px; border-radius: 20px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); }
-    #reader { width: 100%; border-radius: 15px; overflow: hidden; aspect-ratio: 1; background: #000; margin-bottom: 15px; }
-    input { width: 100%; padding: 12px; margin: 5px 0 15px 0; border: 1.5px solid #e2e8f0; border-radius: 10px; font-size: 16px; box-sizing: border-box; }
-    .res { background: #f8fafc; padding: 15px; border-radius: 12px; border-left: 4px solid var(--a); margin-top: 10px; min-height: 50px; }
-    .back { display: block; text-align: center; margin-top: 20px; text-decoration: none; color: var(--a); font-weight: bold; }
-  </style>
-</head>
-<body>
-  <header><img src="logo.png" style="height:35px;"></header>
-  <div class="container">
-    <div class="card">
-      <h3>📍 Platz-Info</h3>
-      <div id="reader"></div>
-      <input type="text" id="pi" placeholder="Platz scannen..." onchange="check()">
-      <div id="out" class="res">Warte auf Scan...</div>
-    </div>
-    <a href="index.html" class="back">← Hauptmenü</a>
-  </div>
-  <script>
-    const api = "DEINE_WEB_APP_URL";
-    let sc = new Html5Qrcode("reader");
+    #reader { 
+      width: 100%; 
+      border-radius: 18px; 
+      overflow: hidden; 
+      background: #000; 
+      margin-bottom: 20px;
+      border: 4px solid var(--bg);
+    }
 
-    async function check() {
-      const p = document.getElementById('pi').value;
-      if(!p) return;
-      document.getElementById('out').innerText = "Suche...";
-      
-      try {
-        const r = await fetch(`${api}?aktion=pruefung&platzId=${encodeURIComponent(p)}`);
-        const d = await r.json();
-        document.getElementById('out').innerHTML = d.res 
-          ? `<b>${d.res.name}</b><br>ID: ${d.res.artikel}<br>Bestand: ${d.res.menge}` 
-          : "Dieser Platz ist aktuell leer.";
-      } catch(e) { 
-        document.getElementById('out').innerText = "Fehler bei der Abfrage."; 
-      }
-    }
+    .input-group {
+      margin-bottom: 16px;
+    }
 
-    sc.start({facingMode:"environment"}, {fps:15, qrbox:250}, (txt) => {
-      document.getElementById('pi').value = txt; 
-      check();
-      if(window.navigator.vibrate) window.navigator.vibrate(50);
-    }).catch(() => {});
-  </script>
-</body>
-</html>
+    .input-group label {
+      display: block;
+      font-size: 0.75rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--text-light);
+      margin-bottom: 6px;
+      margin-left: 4px;
+    }
 
+    input { 
+      width: 100%; 
+      padding: 14px 16px; 
+      border: 2px solid #f1f5f9; 
+      border-radius: 14px; 
+      font-size: 16px; 
+      color: var(--primary);
+      background: #f8fafc;
+      transition: all 0.2s ease;
+      outline: none;
+    }
 
-suche.html
+    input:focus { 
+      border-color: var(--accent); 
+      background: #fff;
+      box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.1);
+    }
 
-<!DOCTYPE html>
-<html lang="de">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Artikelsuche | Lager Pro</title>
-  <script src="https://unpkg.com/html5-qrcode"></script>
-  <style>
-    :root { --p: #0f172a; --a: #2563eb; --bg: #f1f5f9; }
-    * { box-sizing: border-box; }
-    body { font-family: sans-serif; background: var(--bg); margin: 0; padding: 0; }
-    
-    header { background: white; height: 65px; display: flex; align-items: center; justify-content: center; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
-    .logo { height: 40px; }
+    .btn-row { 
+      display: grid; 
+      grid-template-columns: 1fr 1fr; 
+      gap: 12px; 
+      margin-top: 24px; 
+    }
 
-    .container { max-width: 450px; margin: 0 auto; padding: 15px; }
-    .card { background: white; padding: 20px; border-radius: 20px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); border: 1px solid #e2e8f0; }
-    
-    #reader { width: 100%; border-radius: 15px; overflow: hidden; aspect-ratio: 1; background: #000; margin-bottom: 15px; border: 2px solid #e2e8f0; }
-    
-    input { width: 100%; padding: 14px; margin: 5px 0 15px 0; border: 1.5px solid #e2e8f0; border-radius: 12px; font-size: 16px; outline: none; background: #fcfcfd; }
-    input:focus { border-color: var(--a); background: white; }
+    .btn { 
+      padding: 16px; 
+      border: none; 
+      border-radius: 14px; 
+      color: white; 
+      font-weight: 700; 
+      cursor: pointer; 
+      font-size: 0.95rem; 
+      transition: all 0.2s;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+    }
 
-    .res-area { margin-top: 10px; }
-    .art-name { font-weight: 800; color: var(--p); font-size: 1.1rem; margin-bottom: 10px; display: block; }
-    
-    table { width: 100%; border-collapse: collapse; background: #f8fafc; border-radius: 12px; overflow: hidden; }
-    th { text-align: left; background: #e2e8f0; color: #475569; font-size: 11px; padding: 10px; text-transform: uppercase; }
-    td { padding: 12px 10px; border-bottom: 1px solid #e2e8f0; font-size: 15px; color: var(--p); }
-    tr:last-child td { border-bottom: none; }
-    .empty { padding: 20px; text-align: center; color: #64748b; font-style: italic; }
+    .btn span { font-size: 0.7rem; opacity: 0.8; font-weight: 400; }
 
-    .back { display: block; text-align: center; margin-top: 25px; text-decoration: none; color: var(--a); font-weight: bold; font-size: 0.9rem; }
-    
-    /* Overlay für Wartezeit */
-    #ov { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 99; flex-direction: column; align-items: center; justify-content: center; backdrop-filter: blur(2px); color: white; }
-  </style>
+    .btn-in { background: var(--success); box-shadow: 0 4px 12px rgba(16, 185, 129, 0.2); }
+    .btn-out { background: var(--danger); box-shadow: 0 4px 12px rgba(239, 68, 68, 0.2); }
+
+    .btn:active { transform: scale(0.96); opacity: 0.9; }
+
+    #ov { 
+      display: none; 
+      position: fixed; 
+      inset: 0; 
+      background: rgba(15, 23, 42, 0.9); 
+      z-index: 100; 
+      color: white; 
+      flex-direction: column; 
+      align-items: center; 
+      justify-content: center; 
+      backdrop-filter: blur(8px); 
+    }
+
+    .loader {
+      width: 48px;
+      height: 48px;
+      border: 5px solid #fff;
+      border-bottom-color: transparent;
+      border-radius: 50%;
+      display: inline-block;
+      animation: rotation 1s linear infinite;
+      margin-bottom: 15px;
+    }
+
+    @keyframes rotation { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+    .back { 
+      display: inline-flex; 
+      align-items: center;
+      justify-content: center;
+      width: 100%;
+      margin-top: 25px; 
+      text-decoration: none; 
+      color: var(--text-light); 
+      font-weight: 500;
+      font-size: 0.9rem;
+    }
+
+    /* Verstecke hässliche Datei-Upload-Texte vom QR Scanner */
+    #reader__dashboard_section_csr button {
+        background: var(--accent) !important;
+        border-radius: 8px !important;
+        color: white !important;
+        border: none !important;
+        padding: 8px 12px !important;
+    }
+  </style>
 </head>
 <body>
 
-  <div id="ov"><b>Suche Bestände...</b></div>
+  <div id="ov">
+    <span class="loader"></span>
+    <h2 id="ovLabel" style="margin:0;">Übermittle Daten</h2>
+    <p style="opacity:0.7;">Bitte einen Moment Geduld...</p>
+  </div>
 
-  <header>
-    <img src="logo.png" alt="Logo" class="logo">
-  </header>
+  <header>
+    <div style="font-weight: 800; font-size: 1.2rem; color: var(--primary);">
+      LAGER<span style="color:var(--accent)">PRO</span>
+    </div>
+  </header>
 
-  <div class="container">
-    <div class="card">
-      <h3 style="margin-top:0; color:var(--p);">🔎 Artikelsuche</h3>
-      
-      <div id="reader"></div>
-      
-      <label style="font-size:11px; font-weight:bold; color:#94a3b8; margin-left:5px;">ARTIKEL SCANNEN ODER EINGEBEN</label>
-      <input type="text" id="artInput" placeholder="Artikel-ID..." onchange="suche()">
-      
-      <div id="result" class="res-area">
-        </div>
-    </div>
+  <div class="container">
+    <div class="card">
+      <h3>
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m7.5 4.27 9 5.15"/><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/><path d="m3.3 7 8.7 5 8.7-5"/><path d="M12 22V12"/></svg>
+        Warenbewegung
+      </h3>
+      
+      <div id="reader"></div>
+      
+      <div class="input-group">
+        <label>Lagerplatz / Regal</label>
+        <input type="text" id="p" placeholder="Scan oder Eingabe..." autocomplete="off">
+      </div>
+      
+      <div class="input-group">
+        <label>Artikel / EAN</label>
+        <input type="text" id="a" placeholder="Scan oder Eingabe..." autocomplete="off">
+      </div>
+      
+      <div class="input-group">
+        <label>Anzahl / Menge</label>
+        <input type="number" id="m" value="1" min="1">
+      </div>
 
-    <a href="index.html" class="back">← Zurück zum Hauptmenü</a>
-  </div>
+      <div class="btn-row">
+        <button class="btn btn-in" onclick="run('Einlagerung')">
+          EINLAGERN
+          <span>+ Bestand</span>
+        </button>
+        <button class="btn btn-out" onclick="run('Entnahme')">
+          ENTNEHMEN
+          <span>- Bestand</span>
+        </button>
+      </div>
+    </div>
+    
+    <a href="index.html" class="back">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right:8px;"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
+      Zurück zum Hauptmenü
+    </a>
+  </div>
 
-  <script>
-    // DEINE URL HIER EINTRAGEN
-    const api = "DEINE_WEB_APP_URL";
-    
-    let sc = new Html5Qrcode("reader");
+  <script>
+    // DEINE FUNKTIONALE LOGIK (UNVERÄNDERT)
+    const api = "https://script.google.com/macros/s/AKfycbzibU0CKU1mBRcvhaqY_ObcJUmRTcbBEWYJFvw5ft-GMFpn6Xpc57FXTvJvIqpEdiFnpg/exec"; 
 
-    async function suche() {
-      const id = document.getElementById('artInput').value;
-      if(!id) return;
-
-      const resDiv = document.getElementById('result');
-      const overlay = document.getElementById('ov');
-      
-      // Lade-Status anzeigen
-      overlay.style.display = 'flex';
-      resDiv.innerHTML = "";
-      
-      try {
-        // API Aufruf mit Warte-Logik (await)
-        const response = await fetch(`${api}?aktion=warensuche&artikelId=${encodeURIComponent(id)}`);
-        
-        if (!response.ok) throw new Error("Server-Fehler");
-        
-        const d = await response.json();
-        
-        if(d.res && d.res.length > 0) {
-          let html = `<span class="art-name">${d.name || "Unbenannter Artikel"}</span>`;
-          html += `<table><tr><th>Platz</th><th>Menge</th></tr>`;
-          
-          // Sortierung: Größte Menge zuerst
-          d.res.sort((a, b) => b.menge - a.menge);
-
-          d.res.forEach(item => {
-            html += `<tr><td>📍 ${item.platz}</td><td><b>${item.menge}</b></td></tr>`;
-          });
-          
-          html += `</table>`;
-          resDiv.innerHTML = html;
-        } else {
-          resDiv.innerHTML = `<div class="empty">Kein Bestand für "${id}" gefunden.</div>`;
-        }
-      } catch(e) {
-        resDiv.innerHTML = `<div class="empty" style="color:red;">Verbindungsfehler: Bitte Internetverbindung prüfen.</div>`;
-        console.error("Suche fehlgeschlagen:", e);
-      } finally {
-        // Lade-Status ausblenden
-        overlay.style.display = 'none';
-      }
-    }
-
-    // Scanner starten
-    sc.start(
-      { facingMode: "environment" }, 
-      { fps: 15, qrbox: 250 },
-      (txt) => {
-        document.getElementById('artInput').value = txt;
-        suche(); // Suche automatisch nach Scan auslösen
-        if(window.navigator.vibrate) window.navigator.vibrate(50);
-      }
-    ).catch(err => {
-      console.error("Kamera konnte nicht gestartet werden:", err);
-    });
-  </script>
-
-</body>
-</html>
+    async function run(typ) {
+      const art = document.getElementById('a').value.trim();
+      const plz = document.getElementById('p').value.trim();
