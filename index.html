@@ -1,194 +1,145 @@
-**
- * Verarbeitet POST-Anfragen (Buchungen)
- */
-function doPost(e) {
-  try {
-    const payload = JSON.parse(e.postData.contents);
-    const ss = SpreadsheetApp.getActiveSpreadsheet();
-    
-    if (payload.aktion === "buchung") {
-      const d = payload.daten;
-      const veraenderung = (d.typ === "Entnahme") ? -parseFloat(d.menge) : parseFloat(d.menge);
-      
-      // 1. Log schreiben
-      let logSheet = ss.getSheetByName("Log") || ss.insertSheet("Log");
-      logSheet.appendRow([new Date(), d.typ, d.artikel, d.menge, d.platz]);
-      
-      // 2. Bestand aktualisieren
-      aktualisiereBestand(ss, d.artikel, veraenderung, d.platz);
-      
-      return ContentService.createTextOutput(JSON.stringify({status: "ok"}))
-        .setMimeType(ContentService.MimeType.JSON);
-    }
-  } catch (err) {
-    return ContentService.createTextOutput(JSON.stringify({status: "error", msg: err.toString()}))
-      .setMimeType(ContentService.MimeType.JSON);
-  }
-}
-
-function aktualisiereBestand(ss, artikel, veraenderung, platz) {
-  let sheet = ss.getSheetByName("Bestand") || ss.insertSheet("Bestand");
-  if (sheet.getLastRow() === 0) sheet.appendRow(["Platz", "Artikel", "Menge"]);
-  
-  const data = sheet.getDataRange().getValues();
-  let zeile = -1;
-  for (let i = 1; i < data.length; i++) {
-    if (data[i][0].toString() === platz && data[i][1].toString() === artikel) {
-      zeile = i + 1; break;
-    }
-  }
-  
-  if (zeile !== -1) {
-    let neueMenge = Number(data[zeile-1][2]) + veraenderung;
-    sheet.getRange(zeile, 3).setValue(neueMenge);
-  } else {
-    sheet.appendRow([platz, artikel, veraenderung]);
-  }
-}
-
-
 <!DOCTYPE html>
 <html lang="de">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Lager Pro | Final Fix</title>
-  <script src="https://unpkg.com/html5-qrcode"></script>
-  <style>
-    :root { --primary: #2563eb; --danger: #ef4444; --success: #22c55e; --bg: #f8fafc; }
-    body { font-family: sans-serif; background: var(--bg); padding: 15px; margin: 0; color: #334155; }
-    .container { max-width: 500px; margin: auto; }
-    .nav { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-bottom: 20px; }
-    button { padding: 12px; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; transition: 0.2s; }
-    button.active { background: var(--primary); color: white; }
-    .card { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); display: none; }
-    .card.active { display: block; }
-    input { width: 100%; padding: 14px; margin: 8px 0; border: 1px solid #cbd5e1; border-radius: 8px; box-sizing: border-box; font-size: 1rem; }
-    .grid-btns { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px; }
-    .btn-in { background: var(--success); color: white; }
-    .btn-out { background: var(--danger); color: white; }
-    .result-box { background: #f1f5f9; padding: 15px; border-radius: 8px; margin-top: 10px; min-height: 50px; border-left: 5px solid var(--primary); font-size: 1.1rem; }
-    #reader-waren, #reader-platz { width: 100%; border-radius: 8px; overflow: hidden; margin-bottom: 10px; background: #000; }
-  </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Lager Pro | Final Fix</title>
+  <script src="https://unpkg.com/html5-qrcode"></script>
+  <style>
+    :root { --primary: #2563eb; --danger: #ef4444; --success: #22c55e; --bg: #f8fafc; }
+    body { font-family: sans-serif; background: var(--bg); padding: 15px; margin: 0; color: #334155; }
+    .container { max-width: 500px; margin: auto; }
+    .nav { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-bottom: 20px; }
+    button { padding: 12px; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; transition: 0.2s; }
+    button.active { background: var(--primary); color: white; }
+    .card { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); display: none; }
+    .card.active { display: block; }
+    input { width: 100%; padding: 14px; margin: 8px 0; border: 1px solid #cbd5e1; border-radius: 8px; box-sizing: border-box; font-size: 1rem; }
+    .grid-btns { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px; }
+    .btn-in { background: var(--success); color: white; }
+    .btn-out { background: var(--danger); color: white; }
+    .result-box { background: #f1f5f9; padding: 15px; border-radius: 8px; margin-top: 10px; min-height: 50px; border-left: 5px solid var(--primary); font-size: 1.1rem; }
+    #reader-waren, #reader-platz { width: 100%; border-radius: 8px; overflow: hidden; margin-bottom: 10px; background: #000; }
+  </style>
 </head>
 <body>
 
 <div class="container">
-  <input type="hidden" id="backend-url" value="https://script.google.com/macros/s/AKfycbzKAYSo1bgLLK6a9wDblrpen_xZX2i6YhXbiRVk794ek9qxyBmstnkX4uy2g4GHNQ1Gog/exec">
+  <input type="hidden" id="backend-url" value="https://script.google.com/macros/s/AKfycbxqmPCKWY3aCsddxWB8Pe3LyFS8GwGOjkoeAGgpl3IyT7ZFLLq10ORBX0AqDV4lSqXgFQ/exec">
 
-  <div class="nav">
-    <button id="btn-waren" class="active" onclick="switchTab('warenbewegung')">BUCHEN</button>
-    <button id="btn-platz" onclick="switchTab('platzpruefung')">BESTAND</button>
-    <button id="btn-settings" onclick="switchTab('einstellungen')">SETUP</button>
-  </div>
+  <div class="nav">
+    <button id="btn-waren" class="active" onclick="switchTab('warenbewegung')">BUCHEN</button>
+    <button id="btn-platz" onclick="switchTab('platzpruefung')">BESTAND</button>
+    <button id="btn-settings" onclick="switchTab('einstellungen')">SETUP</button>
+  </div>
 
-  <div id="warenbewegung" class="card active">
-    <h3>📦 Warenbewegung</h3>
-    <div id="reader-waren"></div>
-    <input type="text" id="w-platz" placeholder="1. Platz scannen">
-    <input type="text" id="w-artikel" placeholder="2. Artikel scannen">
-    <input type="number" id="w-menge" placeholder="Menge" value="1">
-    <div class="grid-btns">
-      <button class="btn-in" onclick="buchung('Einlagerung')">📥 EIN</button>
-      <button class="btn-out" onclick="buchung('Entnahme')">📤 AUS</button>
-    </div>
-  </div>
+  <div id="warenbewegung" class="card active">
+    <h3>📦 Warenbewegung</h3>
+    <div id="reader-waren"></div>
+    <input type="text" id="w-platz" placeholder="1. Platz scannen">
+    <input type="text" id="w-artikel" placeholder="2. Artikel scannen">
+    <input type="number" id="w-menge" placeholder="Menge" value="1">
+    <div class="grid-btns">
+      <button class="btn-in" onclick="buchung('Einlagerung')">📥 EIN</button>
+      <button class="btn-out" onclick="buchung('Entnahme')">📤 AUS</button>
+    </div>
+  </div>
 
-  <div id="platzpruefung" class="card">
-    <h3>🔍 Bestandsabfrage</h3>
-    <div id="reader-platz"></div>
-    <input type="text" id="p-platz" placeholder="Lagerplatz scannen..." onchange="abfrage()">
-    <div id="p-ergebnis" class="result-box">Warte auf Scan...</div>
-  </div>
+  <div id="platzpruefung" class="card">
+    <h3>🔍 Bestandsabfrage</h3>
+    <div id="reader-platz"></div>
+    <input type="text" id="p-platz" placeholder="Lagerplatz scannen..." onchange="abfrage()">
+    <div id="p-ergebnis" class="result-box">Warte auf Scan...</div>
+  </div>
 
-  <div id="einstellungen" class="card">
-    <h3>⚙️ System-Status</h3>
-    <p>Scanner: <span style="color:green">Aktiv</span></p>
-    <p>Verbindung: GitHub Pages ↔ Google Sheets</p>
-    <button onclick="location.reload()" style="width:100%; background:#64748b; color:white;">🔄 App neu laden</button>
-  </div>
+  <div id="einstellungen" class="card">
+    <h3>⚙️ System-Status</h3>
+    <p>Scanner: <span style="color:green">Aktiv</span></p>
+    <p>Verbindung: GitHub Pages ↔ Google Sheets</p>
+    <button onclick="location.reload()" style="width:100%; background:#64748b; color:white;">🔄 App neu laden</button>
+  </div>
 </div>
 
 <script>
-  let html5QrCode;
-  const getUrl = () => document.getElementById('backend-url').value;
+  let html5QrCode;
+  const getUrl = () => document.getElementById('backend-url').value;
 
-  // 1. BUCHUNG (POST)
-  async function buchung(typ) {
-    const url = getUrl();
-    const data = {
-      aktion: "buchung",
-      daten: {
-        typ: typ,
-        artikel: document.getElementById('w-artikel').value,
-        menge: document.getElementById('w-menge').value,
-        platz: document.getElementById('w-platz').value
-      }
-    };
-    
-    if(!data.daten.artikel || !data.daten.platz) return alert("Bitte Platz und Artikel scannen!");
+  // 1. BUCHUNG (POST)
+  async function buchung(typ) {
+    const url = getUrl();
+    const data = {
+      aktion: "buchung",
+      daten: {
+        typ: typ,
+        artikel: document.getElementById('w-artikel').value,
+        menge: document.getElementById('w-menge').value,
+        platz: document.getElementById('w-platz').value
+      }
+    };
+    
+    if(!data.daten.artikel || !data.daten.platz) return alert("Bitte Platz und Artikel scannen!");
 
-    // Blind-Senden für Buchung
-    fetch(url, { method: "POST", mode: "no-cors", body: JSON.stringify(data) });
-    alert("✅ " + typ + " gesendet!");
-    document.getElementById('w-artikel').value = "";
-  }
+    // Blind-Senden für Buchung
+    fetch(url, { method: "POST", mode: "no-cors", body: JSON.stringify(data) });
+    alert("✅ " + typ + " gesendet!");
+    document.getElementById('w-artikel').value = "";
+  }
 
-  // 2. ABFRAGE (GET mit Redirect Handling)
-  async function abfrage() {
-    const url = getUrl();
-    const platzId = document.getElementById('p-platz').value;
-    const resBox = document.getElementById('p-ergebnis');
-    
-    if(!platzId) return;
-    resBox.innerHTML = "⏳ Suche Bestand...";
+  // 2. ABFRAGE (GET mit Redirect Handling)
+  async function abfrage() {
+    const url = getUrl();
+    const platzId = document.getElementById('p-platz').value;
+    const resBox = document.getElementById('p-ergebnis');
+    
+    if(!platzId) return;
+    resBox.innerHTML = "⏳ Suche Bestand...";
 
-    try {
-      // Wir nutzen GET für die Abfrage, das ist bei Google unkomplizierter für die Rückgabe
-      const response = await fetch(`${url}?aktion=pruefung&platzId=${encodeURIComponent(platzId)}`);
-      const data = await response.json();
-      
-      if(data.status === "success" && data.res) {
-        resBox.innerHTML = `<strong>Artikel:</strong> ${data.res.artikel}<br><strong>Bestand:</strong> ${data.res.menge}`;
-      } else {
-        resBox.innerHTML = "❌ Dieser Platz ist aktuell leer.";
-      }
-    } catch (e) {
-      resBox.innerHTML = "⚠️ Fehler: Verbindung zum Backend fehlgeschlagen.";
-      console.error(e);
-    }
-  }
+    try {
+      // Wir nutzen GET für die Abfrage, das ist bei Google unkomplizierter für die Rückgabe
+      const response = await fetch(`${url}?aktion=pruefung&platzId=${encodeURIComponent(platzId)}`);
+      const data = await response.json();
+      
+      if(data.status === "success" && data.res) {
+        resBox.innerHTML = `<strong>Artikel:</strong> ${data.res.artikel}<br><strong>Bestand:</strong> ${data.res.menge}`;
+      } else {
+        resBox.innerHTML = "❌ Dieser Platz ist aktuell leer.";
+      }
+    } catch (e) {
+      resBox.innerHTML = "⚠️ Fehler: Verbindung zum Backend fehlgeschlagen.";
+      console.error(e);
+    }
+  }
 
-  // Navigation & Scanner
-  function switchTab(tabId) {
-    document.querySelectorAll('.card').forEach(c => c.classList.remove('active'));
-    document.querySelectorAll('.nav button').forEach(b => b.classList.remove('active'));
-    document.getElementById(tabId).classList.add('active');
-    document.getElementById('btn-' + (tabId.includes('waren') ? 'waren' : (tabId.includes('platz') ? 'platz' : 'settings'))).classList.add('active');
-    if (html5QrCode) html5QrCode.stop().then(() => startScanner(tabId)).catch(() => startScanner(tabId));
-  }
+  // Navigation & Scanner
+  function switchTab(tabId) {
+    document.querySelectorAll('.card').forEach(c => c.classList.remove('active'));
+    document.querySelectorAll('.nav button').forEach(b => b.classList.remove('active'));
+    document.getElementById(tabId).classList.add('active');
+    document.getElementById('btn-' + (tabId.includes('waren') ? 'waren' : (tabId.includes('platz') ? 'platz' : 'settings'))).classList.add('active');
+    if (html5QrCode) html5QrCode.stop().then(() => startScanner(tabId)).catch(() => startScanner(tabId));
+  }
 
-  function startScanner(tabId) {
-    const elId = tabId === 'warenbewegung' ? "reader-waren" : (tabId === 'platzpruefung' ? "reader-platz" : null);
-    if(!elId) return;
-    
-    html5QrCode = new Html5Qrcode(elId);
-    html5QrCode.start({ facingMode: "environment" }, { fps: 10, qrbox: {width: 250, height: 150} }, (txt) => {
-      if(tabId === 'warenbewegung') {
-        if(!document.getElementById('w-platz').value) {
-           document.getElementById('w-platz').value = txt;
-        } else {
-           document.getElementById('w-artikel').value = txt;
-        }
-      } else {
-        document.getElementById('p-platz').value = txt;
-        abfrage();
-      }
-      navigator.vibrate(50);
-    }).catch(() => {});
-  }
+  function startScanner(tabId) {
+    const elId = tabId === 'warenbewegung' ? "reader-waren" : (tabId === 'platzpruefung' ? "reader-platz" : null);
+    if(!elId) return;
+    
+    html5QrCode = new Html5Qrcode(elId);
+    html5QrCode.start({ facingMode: "environment" }, { fps: 10, qrbox: {width: 250, height: 150} }, (txt) => {
+      if(tabId === 'warenbewegung') {
+        if(!document.getElementById('w-platz').value) {
+           document.getElementById('w-platz').value = txt;
+        } else {
+           document.getElementById('w-artikel').value = txt;
+        }
+      } else {
+        document.getElementById('p-platz').value = txt;
+        abfrage();
+      }
+      navigator.vibrate(50);
+    }).catch(() => {});
+  }
 
-  window.onload = () => startScanner('warenbewegung');
+  window.onload = () => startScanner('warenbewegung');
 </script>
 </body>
 </html>
