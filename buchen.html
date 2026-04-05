@@ -1,63 +1,97 @@
 <!DOCTYPE html>
 <html lang="de">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Buchen</title>
-  <script src="https://unpkg.com/html5-qrcode"></script>
-  <style>
-    :root { --p: #0f172a; --a: #2563eb; --s: #22c55e; --d: #ef4444; --bg: #f1f5f9; }
-    body { font-family: sans-serif; background: var(--bg); margin: 0; }
-    header { background: white; height: 60px; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
-    .container { max-width: 450px; margin: 0 auto; padding: 15px; }
-    .card { background: white; padding: 20px; border-radius: 20px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); }
-    #reader { width: 100%; border-radius: 15px; overflow: hidden; aspect-ratio: 1; background: #000; margin-bottom: 15px; }
-    input { width: 100%; padding: 12px; margin: 5px 0 15px 0; border: 1.5px solid #e2e8f0; border-radius: 10px; font-size: 16px; }
-    .btn-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-    .btn { padding: 16px; border: none; border-radius: 12px; color: white; font-weight: bold; cursor: pointer; }
-    .back { display: block; text-align: center; margin-top: 20px; text-decoration: none; color: var(--a); font-weight: bold; }
-    #ov { display: none; position: fixed; inset: 0; background: rgba(255,255,255,0.8); z-index: 10; flex-direction: column; align-items: center; justify-content: center; }
-  </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Buchen</title>
+  <script src="https://unpkg.com/html5-qrcode"></script>
+  <style>
+    :root { --p: #0f172a; --a: #2563eb; --s: #22c55e; --d: #ef4444; --bg: #f1f5f9; }
+    body { font-family: sans-serif; background: var(--bg); margin: 0; }
+    header { background: white; height: 60px; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
+    .container { max-width: 450px; margin: 0 auto; padding: 15px; }
+    .card { background: white; padding: 20px; border-radius: 20px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); }
+    #reader { width: 100%; border-radius: 15px; overflow: hidden; aspect-ratio: 1; background: #000; margin-bottom: 15px; }
+    input { width: 100%; padding: 12px; margin: 5px 0 15px 0; border: 1.5px solid #e2e8f0; border-radius: 10px; font-size: 16px; box-sizing: border-box; }
+    .btn-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    .btn { padding: 16px; border: none; border-radius: 12px; color: white; font-weight: bold; cursor: pointer; }
+    .back { display: block; text-align: center; margin-top: 20px; text-decoration: none; color: var(--a); font-weight: bold; }
+    #ov { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 100; color:white; flex-direction: column; align-items: center; justify-content: center; }
+  </style>
 </head>
 <body>
-  <div id="ov"><b>Lade...</b></div>
-  <header><img src="logo.png" style="height:35px;"></header>
-  <div class="container">
-    <div class="card">
-      <h3>📦 Buchen</h3>
-      <div id="reader"></div>
-      <input type="text" id="p" placeholder="Platz scannen">
-      <input type="text" id="a" placeholder="Artikel scannen">
-      <input type="number" id="m" value="1">
-      <div class="btn-row">
-        <button class="btn" style="background:var(--s)" onclick="run('Einlagerung')">EIN</button>
-        <button class="btn" style="background:var(--d)" onclick="run('Entnahme')">AUS</button>
-      </div>
-    </div>
-    <a href="index.html" class="back">← Hauptmenü</a>
-  </div>
-  <script>
-    var api = "https://script.google.com/macros/s/AKfycbxW6utDnfsWVhh3FyMno66TkGXeyItimsd6o-5a61aMuhnVQStw6WZfLh6v4aJi8qFJZQ/exec";
-    var sc = new Html5Qrcode("reader");
-    async function run(t) {
-      var art = document.getElementById('a').value, plz = document.getElementById('p').value;
-      if(!art || !plz) return alert("Scan fehlt!");
-      document.getElementById('ov').style.display='flex';
-      var nN = "";
-      try {
-        var r = await fetch(api+"?aktion=warensuche&artikelId="+art);
-        var d = await r.json();
-        if(!d.name) { document.getElementById('ov').style.display='none'; nN = prompt("Name für neuen Artikel:"); if(!nN) return; document.getElementById('ov').style.display='flex'; }
-        await fetch(api, {method:"POST", mode:"no-cors", body:JSON.stringify({daten:{typ:t, artikel:art, menge:document.getElementById('m').value, platz:plz, neuerName:nN}})});
-        alert("Erfolgreich!"); document.getElementById('a').value="";
-      } catch(e) { alert("Fehler!"); }
-      document.getElementById('ov').style.display='none';
-    }
-    sc.start({facingMode:"environment"}, {fps:20, qrbox:250}, (txt) => {
-      if(!document.getElementById('p').value) document.getElementById('p').value = txt;
-      else document.getElementById('a').value = txt;
-      if(window.navigator.vibrate) window.navigator.vibrate(50);
-    }).catch(()=>{});
-  </script>
+  <div id="ov"><h2 id="ovText">Verarbeite...</h2></div>
+  <header><img src="logo.png" style="height:35px;"></header>
+  <div class="container">
+    <div class="card">
+      <h3>📦 Buchen</h3>
+      <div id="reader"></div>
+      <input type="text" id="p" placeholder="Platz scannen">
+      <input type="text" id="a" placeholder="Artikel scannen">
+      <input type="number" id="m" value="1">
+      <div class="btn-row">
+        <button class="btn" style="background:var(--s)" onclick="run('Einlagerung')">EIN</button>
+        <button class="btn" style="background:var(--d)" onclick="run('Entnahme')">AUS</button>
+      </div>
+    </div>
+    <a href="index.html" class="back">← Hauptmenü</a>
+  </div>
+
+  <script>
+    const api = "DEINE_WEB_APP_URL";
+    let sc = new Html5Qrcode("reader");
+
+    async function run(t) {
+      const art = document.getElementById('a').value;
+      const plz = document.getElementById('p').value;
+      const menge = document.getElementById('m').value;
+      
+      if(!art || !plz || !menge) return alert("Daten unvollständig!");
+      
+      document.getElementById('ov').style.display = 'flex';
+      
+      try {
+        // 1. Artikel checken
+        let check = await fetch(`${api}?aktion=warensuche&artikelId=${art}`);
+        let checkData = await check.json();
+        
+        let nN = "";
+        if (!checkData.name) {
+          document.getElementById('ov').style.display = 'none';
+          nN = prompt("Neuer Artikel! Bitte Name eingeben:");
+          if (!nN) return;
+          document.getElementById('ov').style.display = 'flex';
+        }
+
+        // 2. Buchung senden (POST-Ersatz via Fetch)
+        const response = await fetch(api, {
+          method: "POST",
+          body: JSON.stringify({
+            daten: { typ: t, artikel: art, menge: menge, platz: plz, neuerName: nN }
+          })
+        });
+        
+        const result = await response.json();
+        
+        if(result.status === "success") {
+          alert("Erfolgreich gebucht: " + (result.name || art));
+          document.getElementById('a').value = "";
+          document.getElementById('m').value = "1";
+        } else {
+          alert("Fehler: " + result.msg);
+        }
+      } catch (e) {
+        alert("Netzwerkfehler oder ungültige URL!");
+      } finally {
+        document.getElementById('ov').style.display = 'none';
+      }
+    }
+
+    sc.start({facingMode:"environment"}, {fps:15, qrbox:250}, (txt) => {
+      if(!document.getElementById('p').value) document.getElementById('p').value = txt;
+      else document.getElementById('a').value = txt;
+      if(window.navigator.vibrate) window.navigator.vibrate(50);
+    }).catch(err => console.log(err));
+  </script>
 </body>
 </html>
