@@ -2,255 +2,62 @@
 <html lang="de">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Buchen | Lager Pro</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Buchen</title>
   <script src="https://unpkg.com/html5-qrcode"></script>
   <style>
-    :root { 
-      --p: #1e293b; /* Dunkelblau */
-      --a: #3b82f6; /* Accent Blau */
-      --s: #10b981; /* Erfolg Grün */
-      --d: #ef4444; /* Fehler Rot */
-      --bg: #f8fafc; 
-      --card: #ffffff;
-    }
-
-    * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-    
-    body { 
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; 
-      background: var(--bg); 
-      margin: 0; 
-      color: var(--p);
-    }
-
-    header { 
-      background: white; 
-      height: 65px; 
-      display: flex; 
-      align-items: center; 
-      justify-content: center; 
-      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-      border-bottom: 2px solid #e2e8f0;
-    }
-
-    .container { max-width: 450px; margin: 0 auto; padding: 20px; }
-
-    .card { 
-      background: var(--card); 
-      padding: 25px; 
-      border-radius: 24px; 
-      box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1);
-    }
-
-    h3 { 
-      margin-top: 0; 
-      font-size: 1.2rem; 
-      display: flex; 
-      align-items: center; 
-      gap: 8px; 
-    }
-
-    #reader { 
-      width: 100%; 
-      border-radius: 16px; 
-      overflow: hidden; 
-      background: #000; 
-      margin-bottom: 20px;
-      border: 1px solid #e2e8f0;
-    }
-
-    .input-field { margin-bottom: 15px; }
-
-    label { 
-      display: block; 
-      font-size: 11px; 
-      font-weight: 700; 
-      color: #64748b; 
-      margin-bottom: 5px; 
-      margin-left: 5px;
-      text-transform: uppercase;
-    }
-
-    input { 
-      width: 100%; 
-      padding: 14px; 
-      border: 1.5px solid #e2e8f0; 
-      border-radius: 12px; 
-      font-size: 16px; 
-      outline: none; 
-      transition: all 0.2s;
-      background: #fdfdfd;
-    }
-
-    input:focus { border-color: var(--a); background: white; box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1); }
-
-    .btn-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 20px; }
-
-    .btn { 
-      padding: 18px 10px; 
-      border: none; 
-      border-radius: 14px; 
-      color: white; 
-      font-weight: 700; 
-      cursor: pointer; 
-      font-size: 0.9rem; 
-      transition: transform 0.1s, opacity 0.2s;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 4px;
-    }
-
-    .btn:active { transform: scale(0.96); opacity: 0.9; }
-    
-    .btn small { font-weight: 400; font-size: 0.7rem; opacity: 0.8; }
-
-    #ov { 
-      display: none; 
-      position: fixed; 
-      inset: 0; 
-      background: rgba(15, 23, 42, 0.9); 
-      z-index: 100; 
-      color: white; 
-      flex-direction: column; 
-      align-items: center; 
-      justify-content: center; 
-      backdrop-filter: blur(5px); 
-    }
-
-    .spinner {
-      width: 40px;
-      height: 40px;
-      border: 4px solid rgba(255,255,255,0.3);
-      border-top: 4px solid white;
-      border-radius: 50%;
-      animation: spin 1s linear infinite;
-      margin-bottom: 15px;
-    }
-
-    @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-
-    .back { 
-      display: block; 
-      text-align: center; 
-      margin-top: 30px; 
-      text-decoration: none; 
-      color: #64748b; 
-      font-weight: 500;
-      font-size: 0.9rem;
-    }
+    :root { --p: #0f172a; --a: #2563eb; --s: #22c55e; --d: #ef4444; --bg: #f1f5f9; }
+    body { font-family: sans-serif; background: var(--bg); margin: 0; }
+    header { background: white; height: 60px; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
+    .container { max-width: 450px; margin: 0 auto; padding: 15px; }
+    .card { background: white; padding: 20px; border-radius: 20px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); }
+    #reader { width: 100%; border-radius: 15px; overflow: hidden; aspect-ratio: 1; background: #000; margin-bottom: 15px; }
+    input { width: 100%; padding: 12px; margin: 5px 0 15px 0; border: 1.5px solid #e2e8f0; border-radius: 10px; font-size: 16px; }
+    .btn-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    .btn { padding: 16px; border: none; border-radius: 12px; color: white; font-weight: bold; cursor: pointer; }
+    .back { display: block; text-align: center; margin-top: 20px; text-decoration: none; color: var(--a); font-weight: bold; }
+    #ov { display: none; position: fixed; inset: 0; background: rgba(255,255,255,0.8); z-index: 10; flex-direction: column; align-items: center; justify-content: center; }
   </style>
 </head>
 <body>
-
-  <div id="ov">
-    <div class="spinner"></div>
-    <h2 id="ovLabel" style="margin:0;">Daten werden verarbeitet</h2>
-    <p style="opacity:0.7;">Bitte warten...</p>
-  </div>
-
-  <header>
-    <div style="font-weight: 800; font-size: 1.3rem; letter-spacing: -0.5px;">
-      LAGER<span style="color:var(--a)">PRO</span>
-    </div>
-  </header>
-
+  <div id="ov"><b>Lade...</b></div>
+  <header><img src="logo.png" style="height:35px;"></header>
   <div class="container">
     <div class="card">
-      <h3>📦 Warenbewegung</h3>
-      
+      <h3>📦 Buchen</h3>
       <div id="reader"></div>
-      
-      <div class="input-field">
-        <label>Platz / Regal</label>
-        <input type="text" id="p" placeholder="Scan Lagerplatz...">
-      </div>
-      
-      <div class="input-field">
-        <label>Artikel / EAN</label>
-        <input type="text" id="a" placeholder="Scan Artikel...">
-      </div>
-      
-      <div class="input-field">
-        <label>Menge</label>
-        <input type="number" id="m" value="1" min="1">
-      </div>
-
+      <input type="text" id="p" placeholder="Platz scannen">
+      <input type="text" id="a" placeholder="Artikel scannen">
+      <input type="number" id="m" value="1">
       <div class="btn-row">
-        <button class="btn" style="background:var(--s)" onclick="run('Einlagerung')">
-          EINLAGERN
-          <small>Bestand erhöhen</small>
-        </button>
-        <button class="btn" style="background:var(--d)" onclick="run('Entnahme')">
-          ENTNEHMEN
-          <small>Bestand senken</small>
-        </button>
+        <button class="btn" style="background:var(--s)" onclick="run('Einlagerung')">EIN</button>
+        <button class="btn" style="background:var(--d)" onclick="run('Entnahme')">AUS</button>
       </div>
     </div>
-    <a href="index.html" class="back">← Zurück zum Hauptmenü</a>
+    <a href="index.html" class="back">← Hauptmenü</a>
   </div>
-
   <script>
-    // DEINE URL HIER EINTRAGEN
-    const api = "https://script.google.com/macros/s/AKfycbzibU0CKU1mBRcvhaqY_ObcJUmRTcbBEWYJFvw5ft-GMFpn6Xpc57FXTvJvIqpEdiFnpg/exec"; 
-
-    async function run(typ) {
-      const art = document.getElementById('a').value.trim();
-      const plz = document.getElementById('p').value.trim();
-      const menge = document.getElementById('m').value;
-      
-      if(!art || !plz || !menge) return alert("Fehlende Daten! Bitte scannen Sie Platz und Artikel.");
-      
-      document.getElementById('ov').style.display = 'flex';
-      
+    var api = "https://script.google.com/macros/s/AKfycbxVzhqyg5a8pPQaanfcDEL-WqFRmBVMUP8eMBlwPxZ1aRFK-wSyhwok6R_uQ_PO4mc_/exec";
+    var sc = new Html5Qrcode("reader");
+    async function run(t) {
+      var art = document.getElementById('a').value, plz = document.getElementById('p').value;
+      if(!art || !plz) return alert("Scan fehlt!");
+      document.getElementById('ov').style.display='flex';
+      var nN = "";
       try {
-        // 1. Artikel prüfen
-        let checkRes = await fetch(`${api}?aktion=warensuche&artikelId=${encodeURIComponent(art)}`);
-        let checkData = await checkRes.json();
-        
-        let neuerName = "";
-        if (!checkData.name) {
-          document.getElementById('ov').style.display = 'none';
-          neuerName = prompt("Neuer Artikel erkannt! Bitte Bezeichnung eingeben:");
-          if (!neuerName) return; 
-          document.getElementById('ov').style.display = 'flex';
-        }
-
-        // 2. Buchung senden
-        const response = await fetch(api, {
-          method: "POST",
-          body: JSON.stringify({
-            daten: { typ: typ, artikel: art, menge: menge, platz: plz, neuerName: neuerName }
-          })
-        });
-        
-        const result = await response.json();
-        
-        if(result.status === "success") {
-          alert(`Erfolg: ${typ} von ${result.name || art}`);
-          document.getElementById('a').value = ""; // Fokus auf nächsten Artikel
-        } else {
-          alert("Server-Fehler: " + result.msg);
-        }
-      } catch (e) {
-        alert("Netzwerkfehler! Verbindung prüfen.");
-      } finally {
-        document.getElementById('ov').style.display = 'none';
-      }
+        var r = await fetch(api+"?aktion=warensuche&artikelId="+art);
+        var d = await r.json();
+        if(!d.name) { document.getElementById('ov').style.display='none'; nN = prompt("Name für neuen Artikel:"); if(!nN) return; document.getElementById('ov').style.display='flex'; }
+        await fetch(api, {method:"POST", mode:"no-cors", body:JSON.stringify({daten:{typ:t, artikel:art, menge:document.getElementById('m').value, platz:plz, neuerName:nN}})});
+        alert("Erfolgreich!"); document.getElementById('a').value="";
+      } catch(e) { alert("Fehler!"); }
+      document.getElementById('ov').style.display='none';
     }
-
-    // QR Scanner Initialisierung
-    let sc = new Html5Qrcode("reader");
-    sc.start({facingMode:"environment"}, {fps:15, qrbox:250}, (txt) => {
-      if(!document.getElementById('p').value) {
-        document.getElementById('p').value = txt;
-        if(window.navigator.vibrate) window.navigator.vibrate([50, 30, 50]);
-      } else if(document.getElementById('p').value !== txt) {
-        document.getElementById('a').value = txt;
-        if(window.navigator.vibrate) window.navigator.vibrate(50);
-      }
-    }).catch(err => console.error(err));
+    sc.start({facingMode:"environment"}, {fps:20, qrbox:250}, (txt) => {
+      if(!document.getElementById('p').value) document.getElementById('p').value = txt;
+      else document.getElementById('a').value = txt;
+      if(window.navigator.vibrate) window.navigator.vibrate(50);
+    }).catch(()=>{});
   </script>
 </body>
 </html>
